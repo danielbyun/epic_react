@@ -6,19 +6,80 @@
   <script src="https://unpkg.com/react@17.0.0/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@17.0.0/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone@7.12.4/babel.js"></script>
+  <script src="https://unpkg.com/prop-types@15.7.2/prop-types.js"></script>
   <script type="text/babel">
     // 🐨 Make a function called `message` which returns the JSX we want to share
+    // ========== extra credit (2) ========== did it without noticing lol
+    const Message = ({className, children, ...props}) => (
+      <props.type className={className}>{children}</props.type>
+    )
 
     // 🐨 use that function in place of the divs below with:
     // 💰 {message({children: 'Hello World'})} {message({children: 'Goodbye World'})}
     const element = (
       <div className="container">
-        <div className="message">Hello World</div>
-        <div className="message">Goodbye World</div>
+        <Message type="div" className="message" children="Hello World" />
+        <Message type="div" className="message" children="Goodbye World" />
+      </div>
+    )
+    // ========== extra credit (2) ==========
+
+    // what kent wants
+    const message = ({children}) => {
+      return <div className="message">{children}</div>
+    }
+
+    const originalElement = (
+      <div className="container">
+        <div>{message({children: 'Hello World'})}</div>
+        <div>{message({children: 'Goodbye World'})}</div>
       </div>
     )
 
+    // extra credit (1)
+    const helloElement = React.createElement(message, {children: 'Hello World'})
+    const byeElement = React.createElement(message, {children: 'Bye World'})
+
+    const extraCreditOne = (
+      <div className="container">
+        {helloElement}
+        {byeElement}
+      </div>
+    )
+
+    // extra credit (2)
+    const secondElement = null
+
+    // extra credit (3) && extra credit (4)
+    const NewMessage = ({subject, greeting}) => {
+      return (
+        <div className="message">
+          {greeting}, {subject}
+        </div>
+      )
+    }
+
+    NewMessage.propTypes = {
+      greeting: PropTypes.string.isRequired,
+      subject: PropTypes.string.isRequired,
+    }
+
+    const thirdElement = (
+      <div className="container">
+        <NewMessage greeting="Hello" />
+        <NewMessage greeting="Bye" />
+      </div>
+    )
+
+    // extra credit (5)
+    const fifthElement = (
+      <React.Fragment>
+        <div>{message({children: 'Hello World'})}</div>
+        <div>{message({children: 'Goodbye World'})}</div>
+      </React.Fragment>
+    )
+
     // 💯 This is only the first step to making actual React components. The rest is in the extra credit!
-    ReactDOM.render(element, document.getElementById('root'))
+    ReactDOM.render(thirdElement, document.getElementById('root'))
   </script>
 </body>
