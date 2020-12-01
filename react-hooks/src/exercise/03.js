@@ -22,7 +22,6 @@ const FavoriteAnimal = ({animal, onAnimalChange}) => {
   )
 }
 
-// 🐨 uncomment this
 const Display = ({animal}) => {
   return <div>{`Your favorite animal is: ${animal}!`}</div>
 }

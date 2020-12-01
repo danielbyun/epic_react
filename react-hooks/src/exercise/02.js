@@ -35,7 +35,7 @@ const useLocalStorage = (
 }
 
 const Greeting = ({initialName = ''}) => {
-  const [name, setName] = useLocalStorage('name', initialName)
+  const [name, setName] = useLocalStorage('name', initialName, {})
 
   const handleChange = event => {
     setName(event.target.value)
