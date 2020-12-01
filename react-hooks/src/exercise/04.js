@@ -61,23 +61,23 @@ const Game = () => {
     const newSquares = [...currentSquares]
     newSquares[square] = nextValue
 
-    setHistory(...newHistory, newSquares)
+    setHistory([...newHistory, newSquares])
     setCurrentStep(newHistory.length)
   }
 
-  useEffect(() => {
-    if (currentSquares) {
-      window.localStorage.setItem('gameState', JSON.stringify(currentSquares))
-    } else {
-      window.localStorage.setItem(
-        'gameState',
-        JSON.stringify(Array(9).fill(null)),
-      )
-    }
-  }, [currentSquares]) // extra credit 1
+  // useEffect(() => {
+  //   if (currentSquares) {
+  //     window.localStorage.setItem('gameState', JSON.stringify(currentSquares))
+  //   } else {
+  //     window.localStorage.setItem(
+  //       'gameState',
+  //       JSON.stringify(Array(9).fill(null)),
+  //     )
+  //   }
+  // }, [currentSquares]) // extra credit 1
 
   const restart = () => {
-    setHistory(Array(9).fill(null))
+    setHistory([Array(9).fill(null)])
     setCurrentStep(0)
   }
 
