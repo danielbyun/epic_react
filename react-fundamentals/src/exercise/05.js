@@ -61,7 +61,7 @@ const BoxImproved = ({className = '', size, style, ...otherProps}) => {
   )
 }
 
-function App() {
+const App = () => {
   return (
     <div>
       {smallBox}

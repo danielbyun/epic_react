@@ -10,17 +10,17 @@ const allItems = [
   {id: 'pear', value: '🍐 pear'},
 ]
 
-function App() {
+const App = () => {
   const [items, setItems] = React.useState(allItems)
 
-  function addItem() {
+  const addItem = () => {
     setItems([
       ...items,
       allItems.find(i => !items.map(({id}) => id).includes(i.id)),
     ])
   }
 
-  function removeItem(item) {
+  const removeItem = item => {
     setItems(items.filter(i => i.id !== item.id))
   }
 

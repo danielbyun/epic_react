@@ -3,7 +3,7 @@
 
 import * as React from 'react'
 
-function UsernameForm({onSubmitUsername}) {
+const UsernameForm = ({onSubmitUsername}) => {
   // 🐨 add a submit event handler here (`handleSubmit`).
   // 💰 Make sure to accept the `event` as an argument and call
   // `event.preventDefault()` to prevent the default behavior of form submit
@@ -60,7 +60,7 @@ function UsernameForm({onSubmitUsername}) {
   )
 }
 
-function App() {
+const App = () => {
   const onSubmitUsername = username => alert(`You entered: ${username}`)
   return <UsernameForm onSubmitUsername={onSubmitUsername} />
 }
