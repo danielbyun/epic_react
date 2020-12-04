@@ -3,17 +3,41 @@
 
 import * as React from 'react'
 
+// exercise
 const countReducer = (prevCount, newCount) => {
   return newCount
 }
 
+// extra credit 1
 const countStepReducer = (prevcount, newCount) => {
   return prevcount + newCount
 }
 
-// extra credit 3
+// extra credit 2
 const countObjectStateReducer = (state, action) => {
   return {...state, ...action}
+}
+
+// extra credit 3
+const countObjectFunctionReducer = (state, action) => action(state)
+// more flexible
+const countObjectFunctionReducerImproved = (state, action) => ({
+  ...state,
+  ...(typeof action === 'function' ? action(state) : action),
+})
+
+// extra credit 4
+const countDispatch = (state, action) => {
+  switch (action.type) {
+    case 'INCREMENT':
+      return {
+        ...state,
+        count: state.count + action.step,
+      }
+    default: {
+      throw new Error(`Unsupported action type: ${action.type}`)
+    }
+  }
 }
 
 function Counter({initialCount = 0, step = 1}) {
@@ -38,7 +62,7 @@ function Counter({initialCount = 0, step = 1}) {
   })
 
   // extra credit 4
-  const [dispatchState, dispatch] = React.useReducer(countObjectStateReducer, {
+  const [dispatchState, dispatch] = React.useReducer(countDispatch, {
     count: initialCount,
   })
 
