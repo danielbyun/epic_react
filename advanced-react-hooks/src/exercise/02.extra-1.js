@@ -1,6 +1,6 @@
 // useCallback: custom hooks
 
-import React, {useEffect, useReducer, useState} from 'react'
+import React, {useCallback, useEffect, useReducer, useState} from 'react'
 import {
   fetchPokemon,
   PokemonForm,
@@ -8,6 +8,8 @@ import {
   PokemonInfoFallback,
   PokemonErrorBoundary,
 } from '../pokemon'
+
+// TODO: have asyncCallback change only when pokemonName changes
 
 // typical reducer
 const asyncReducer = (state, action) => {
@@ -50,21 +52,18 @@ const useAsync = (asyncCallback, initialValues, dependencies) => {
         dispatch({type: 'rejected', error})
       },
     )
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, dependencies)
+  }, [asyncCallback])
 
   return state
 }
 
 const PokemonInfo = ({pokemonName}) => {
+  const asyncCallback = useCallback(() => {
+    if (!pokemonName) return
+    return fetchPokemon(pokemonName)
+  }, [pokemonName])
   const state = useAsync(
-    () => {
-      if (!pokemonName) {
-        return
-      }
-      return fetchPokemon(pokemonName)
-    },
+    asyncCallback,
     {status: pokemonName ? 'pending' : 'idle'},
     [pokemonName],
   )
