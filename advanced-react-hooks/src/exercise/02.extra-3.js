@@ -1,6 +1,13 @@
 // useCallback: custom hooks
 
-import React, {useEffect, useReducer, useState} from 'react'
+import React, {
+  useCallback,
+  useEffect,
+  useReducer,
+  useState,
+  useRef,
+  useLayoutEffect,
+} from 'react'
 import {
   fetchPokemon,
   PokemonForm,
@@ -8,6 +15,27 @@ import {
   PokemonInfoFallback,
   PokemonErrorBoundary,
 } from '../pokemon'
+
+// useSafeDisaptch custom hooks
+const useSafeDispatch = dispatch => {
+  // know how a component has been unmounted
+  const mountRef = useRef(false)
+
+  // see if the component has been mounted
+  useLayoutEffect(() => {
+    mountRef.current = true
+
+    // unmount the flag
+    return () => (mountRef.current = false)
+  }, [])
+
+  return useCallback(
+    (...args) => {
+      if (mountRef.current) dispatch(...args)
+    },
+    [dispatch],
+  )
+}
 
 // typical reducer
 const asyncReducer = (state, action) => {
@@ -28,59 +56,47 @@ const asyncReducer = (state, action) => {
 }
 
 // custom hook
-const useAsync = (asyncCallback, initialValues, dependencies) => {
-  const [state, dispatch] = useReducer(asyncReducer, {
+const useAsync = initialValues => {
+  const [state, unsafeDispatch] = useReducer(asyncReducer, {
     status: 'idle',
     data: null,
     error: null,
     ...initialValues,
   })
 
-  useEffect(() => {
-    const promise = asyncCallback()
-    if (!promise) {
-      return
-    }
-    dispatch({type: 'pending'})
-    promise.then(
-      data => {
-        dispatch({type: 'resolved', data})
-      },
-      error => {
-        dispatch({type: 'rejected', error})
-      },
-    )
+  const dispatch = useSafeDispatch(unsafeDispatch)
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, dependencies)
+  const run = useCallback(
+    promise => {
+      if (!promise) return
+      dispatch({type: 'pending'})
+      promise.then(
+        data => dispatch({type: 'resolved', data}),
+        error => dispatch({type: 'rejected', error}),
+      )
+    },
+    [dispatch],
+  )
 
-  return state
+  return {...state, run}
 }
 
 const PokemonInfo = ({pokemonName}) => {
-  const state = useAsync(
-    () => {
-      if (!pokemonName) {
-        return
-      }
-      return fetchPokemon(pokemonName)
-    },
-    {status: pokemonName ? 'pending' : 'idle'},
-    [pokemonName],
-  )
+  const {data: pokemon, status, error, run} = useAsync({
+    status: pokemonName ? 'pending' : 'idle',
+  })
 
-  // 🐨 this will change from "pokemon" to "data"
-  const {data: pokemon, status, error} = state
+  useEffect(() => {
+    if (!pokemonName) return
 
-  if (status === 'idle' || !pokemonName) {
-    return 'Submit a pokemon'
-  } else if (status === 'pending') {
+    return run(fetchPokemon(pokemonName))
+  }, [pokemonName, run])
+
+  if (status === 'idle' || !pokemonName) return 'Submit a pokemon'
+  else if (status === 'pending')
     return <PokemonInfoFallback name={pokemonName} />
-  } else if (status === 'rejected') {
-    throw error
-  } else if (status === 'resolved') {
-    return <PokemonDataView pokemon={pokemon} />
-  }
+  else if (status === 'rejected') throw error
+  else if (status === 'resolved') return <PokemonDataView pokemon={pokemon} />
 
   throw new Error('This should be impossible')
 }
@@ -88,13 +104,8 @@ const PokemonInfo = ({pokemonName}) => {
 const App = () => {
   const [pokemonName, setPokemonName] = useState('')
 
-  const handleSubmit = newPokemonName => {
-    setPokemonName(newPokemonName)
-  }
-
-  const handleReset = () => {
-    setPokemonName('')
-  }
+  const handleSubmit = newPokemonName => setPokemonName(newPokemonName)
+  const handleReset = () => setPokemonName('')
 
   return (
     <div className="pokemon-info-app">
@@ -119,7 +130,7 @@ const AppWithUnmountCheckbox = () => {
           type="checkbox"
           checked={mountApp}
           onChange={e => setMountApp(e.target.checked)}
-        />{' '}
+        />
         Mount Component
       </label>
       <hr />
