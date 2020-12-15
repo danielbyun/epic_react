@@ -5,19 +5,26 @@ import * as React from 'react'
 import {Switch} from '../switch'
 
 // 🐨 create your ToggleContext context here
+const ToggleContext = React.createContext()
+ToggleContext.displayName = 'ToggleContext'
 // 📜 https://reactjs.org/docs/context.html#reactcreatecontext
 
-function Toggle({onToggle, children}) {
+const Toggle = ({onToggle, children}) => {
   const [on, setOn] = React.useState(false)
   const toggle = () => setOn(!on)
 
+  // return React.Children.map(children, child => {
+  //   return typeof child.type === 'string'
+  //     ? child
+  //     : React.cloneElement(child, {on, toggle})
+  // })
+
   // 🐨 remove all this 💣 and instead return <ToggleContext.Provider> where
   // the value is an object that has `on` and `toggle` on it.
-  return React.Children.map(children, child => {
-    return typeof child.type === 'string'
-      ? child
-      : React.cloneElement(child, {on, toggle})
-  })
+  const value = {on, toggle}
+  return (
+    <ToggleContext.Provider value={value}>{children}</ToggleContext.Provider>
+  )
 }
 
 // 🐨 we'll still get the children from props (as it's passed to us by the
@@ -25,23 +32,34 @@ function Toggle({onToggle, children}) {
 // ToggleContext now
 // 🦉 You can create a helper method to retrieve the context here. Thanks to that,
 // your context won't be exposed to the user
-// 💰 `const context = React.useContext(ToggleContext)`
+const useCustomContext = () => {
+  const context = React.useContext(ToggleContext)
+
+  if (context === undefined) {
+    throw new Error(`useCustomContext must be used within a Provider`)
+  }
+
+  return context
+}
 // 📜 https://reactjs.org/docs/hooks-reference.html#usecontext
-function ToggleOn({on, children}) {
+const ToggleOn = ({children}) => {
+  const {on} = useCustomContext()
   return on ? children : null
 }
 
 // 🐨 do the same thing to this that you did to the ToggleOn component
-function ToggleOff({on, children}) {
+const ToggleOff = ({children}) => {
+  const {on} = useCustomContext()
   return on ? null : children
 }
 
 // 🐨 get `on` and `toggle` from the ToggleContext with `useContext`
-function ToggleButton({on, toggle, ...props}) {
+const ToggleButton = ({...props}) => {
+  const {on, toggle} = useCustomContext()
   return <Switch on={on} onClick={toggle} {...props} />
 }
 
-function App() {
+const App = () => {
   return (
     <div>
       <Toggle>
@@ -54,6 +72,8 @@ function App() {
     </div>
   )
 }
+
+// const App = () => <ToggleButton />
 
 export default App
 
