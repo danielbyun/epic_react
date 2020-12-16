@@ -1,12 +1,11 @@
 // State Reducer
-// http://localhost:3000/isolated/exercise/05.js
 
 import * as React from 'react'
 import {Switch} from '../switch'
 
 const callAll = (...fns) => (...args) => fns.forEach(fn => fn?.(...args))
 
-function toggleReducer(state, {type, initialState}) {
+const toggleReducer = (state, {type, initialState}) => {
   switch (type) {
     case 'toggle': {
       return {on: !state.on}
@@ -20,19 +19,16 @@ function toggleReducer(state, {type, initialState}) {
   }
 }
 
-// 🐨 add a new option called `reducer` that defaults to `toggleReducer`
-function useToggle({initialOn = false} = {}) {
+const useToggle = ({initialOn = false, reducer = toggleReducer} = {}) => {
   const {current: initialState} = React.useRef({on: initialOn})
-  // 🐨 instead of passing `toggleReducer` here, pass the `reducer` that's
-  // provided as an option
-  // ... and that's it! Don't forget to check the 💯 extra credit!
-  const [state, dispatch] = React.useReducer(toggleReducer, initialState)
+
+  const [state, dispatch] = React.useReducer(reducer, initialState)
   const {on} = state
 
   const toggle = () => dispatch({type: 'toggle'})
   const reset = () => dispatch({type: 'reset', initialState})
 
-  function getTogglerProps({onClick, ...props} = {}) {
+  const getTogglerProps = ({onClick, ...props} = {}) => {
     return {
       'aria-pressed': on,
       onClick: callAll(onClick, toggle),
@@ -40,7 +36,7 @@ function useToggle({initialOn = false} = {}) {
     }
   }
 
-  function getResetterProps({onClick, ...props} = {}) {
+  const getResetterProps = ({onClick, ...props} = {}) => {
     return {
       onClick: callAll(onClick, reset),
       ...props,
@@ -56,11 +52,11 @@ function useToggle({initialOn = false} = {}) {
   }
 }
 
-function App() {
+const App = () => {
   const [timesClicked, setTimesClicked] = React.useState(0)
   const clickedTooMuch = timesClicked >= 4
 
-  function toggleStateReducer(state, action) {
+  const toggleStateReducer = (state, action) => {
     switch (action.type) {
       case 'toggle': {
         if (clickedTooMuch) {
