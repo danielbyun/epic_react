@@ -5,6 +5,7 @@ import {Switch} from '../switch'
 
 const callAll = (...fns) => (...args) => fns.forEach(fn => fn?.(...args))
 
+// extra credit 2
 const types = {
   toggle: 'toggle',
   reset: 'reset',
@@ -61,6 +62,7 @@ const App = () => {
   const [timesClicked, setTimesClicked] = React.useState(0)
   const clickedTooMuch = timesClicked >= 4
 
+  // extra credit 1
   const toggleStateReducer = (state, action) => {
     if (action.type === types.toggle && timesClicked >= 4) {
       return {on: state.on}
