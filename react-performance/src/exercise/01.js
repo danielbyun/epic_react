@@ -5,7 +5,10 @@ import * as React from 'react'
 // 💣 remove this import
 // import Globe from '../globe'
 
-const Globe = React.lazy(() => import('../globe'))
+// extra credit 1 (eager loading)
+const loadGlobe = () => import(/* webpackPrefetch: true */ '../globe')
+// const loadGlobe = () => import('../globe') // extra credit 2
+const Globe = React.lazy(() => loadGlobe)
 
 // 🐨 use React.lazy to create a Globe component which using a dynamic import
 // to get the Globe component from the '../globe' module.
@@ -28,16 +31,19 @@ const App = () => {
         padding: '2rem',
       }}
     >
-      <React.Suspense fallback={<div>...loading</div>}>
-        <label style={{marginBottom: '1rem'}}>
-          <input
-            type="checkbox"
-            checked={showGlobe}
-            onChange={e => setShowGlobe(e.target.checked)}
-          />
-          {' show globe'}
-        </label>
-      </React.Suspense>
+      <label
+        style={{marginBottom: '1rem'}}
+        onMouseEnter={loadGlobe}
+        onFocus={loadGlobe}
+      >
+        <input
+          type="checkbox"
+          checked={showGlobe}
+          onChange={e => setShowGlobe(e.target.checked)}
+        />
+        {' show globe'}
+      </label>
+
       <div style={{width: 400, height: 400}}>
         <React.Suspense fallback={<div>...globe loading</div>}>
           {showGlobe ? <Globe /> : null}
