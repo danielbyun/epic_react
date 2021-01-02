@@ -22,8 +22,8 @@ const Menu = React.memo(function Menu({
           getItemProps={getItemProps}
           item={item}
           index={index}
-          selectedItem={selectedItem}
-          highlightedIndex={highlightedIndex}
+          isSelected={selectedItem?.id === item.id} // extra credit 2
+          isHighlighted={highlightedIndex === index} // extra credit 2
         >
           {item.name}
         </ListItem>
@@ -37,12 +37,10 @@ const ListItem = React.memo(
     getItemProps,
     item,
     index,
-    selectedItem,
-    highlightedIndex,
+    isSelected,
+    isHighlighted,
     ...props
   }) {
-    const isSelected = selectedItem?.id === item.id
-    const isHighlighted = highlightedIndex === index
     return (
       <li
         {...getItemProps({
@@ -57,23 +55,23 @@ const ListItem = React.memo(
       />
     )
   },
-  (prevProps, nextProps) => {
-    if (prevProps.getItemProps !== nextProps.getItemProps) return false
-    if (prevProps.items !== nextProps.items) return false
-    if (prevProps.index !== nextProps.index) return false
-    if (prevProps.selectedItem !== nextProps.selectedItem) return false
+  // (prevProps, nextProps) => {
+  //   if (prevProps.getItemProps !== nextProps.getItemProps) return false
+  //   if (prevProps.items !== nextProps.items) return false
+  //   if (prevProps.index !== nextProps.index) return false
+  //   if (prevProps.selectedItem !== nextProps.selectedItem) return false
 
-    if (prevProps.highlightedIndex !== nextProps.highlightedIndex) {
-      // determine if we care about this highlightedIndex change
-      const wasPrevHighlighted = prevProps.highlightedIndex === prevProps.index
+  //   if (prevProps.highlightedIndex !== nextProps.highlightedIndex) {
+  //     // determine if we care about this highlightedIndex change
+  //     const wasPrevHighlighted = prevProps.highlightedIndex === prevProps.index
 
-      const isNowHighlighted = nextProps.highlightedIndex === nextProps.index
+  //     const isNowHighlighted = nextProps.highlightedIndex === nextProps.index
 
-      return wasPrevHighlighted === isNowHighlighted
-    }
+  //     return wasPrevHighlighted === isNowHighlighted
+  //   }
 
-    return true
-  },
+  //   return true
+  // },
 )
 // 🐨 Memoize the ListItem here using React.memo
 
