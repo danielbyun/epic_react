@@ -6,7 +6,8 @@ import {useCombobox} from '../use-combobox'
 import {getItems} from '../workerized-filter-cities'
 import {useAsync, useForceRerender} from '../utils'
 
-function Menu({
+// 🐨 Memoize the Menu here using React.memo
+const Menu = React.memo(function Menu({
   items,
   getMenuProps,
   getItemProps,
@@ -29,36 +30,54 @@ function Menu({
       ))}
     </ul>
   )
-}
-// 🐨 Memoize the Menu here using React.memo
+})
 
-function ListItem({
-  getItemProps,
-  item,
-  index,
-  selectedItem,
-  highlightedIndex,
-  ...props
-}) {
-  const isSelected = selectedItem?.id === item.id
-  const isHighlighted = highlightedIndex === index
-  return (
-    <li
-      {...getItemProps({
-        index,
-        item,
-        style: {
-          fontWeight: isSelected ? 'bold' : 'normal',
-          backgroundColor: isHighlighted ? 'lightgray' : 'inherit',
-        },
-        ...props,
-      })}
-    />
-  )
-}
+const ListItem = React.memo(
+  function ListItem({
+    getItemProps,
+    item,
+    index,
+    selectedItem,
+    highlightedIndex,
+    ...props
+  }) {
+    const isSelected = selectedItem?.id === item.id
+    const isHighlighted = highlightedIndex === index
+    return (
+      <li
+        {...getItemProps({
+          index,
+          item,
+          style: {
+            fontWeight: isSelected ? 'bold' : 'normal',
+            backgroundColor: isHighlighted ? 'lightgray' : 'inherit',
+          },
+          ...props,
+        })}
+      />
+    )
+  },
+  (prevProps, nextProps) => {
+    if (prevProps.getItemProps !== nextProps.getItemProps) return false
+    if (prevProps.items !== nextProps.items) return false
+    if (prevProps.index !== nextProps.index) return false
+    if (prevProps.selectedItem !== nextProps.selectedItem) return false
+
+    if (prevProps.highlightedIndex !== nextProps.highlightedIndex) {
+      // determine if we care about this highlightedIndex change
+      const wasPrevHighlighted = prevProps.highlightedIndex === prevProps.index
+
+      const isNowHighlighted = nextProps.highlightedIndex === nextProps.index
+
+      return wasPrevHighlighted === isNowHighlighted
+    }
+
+    return true
+  },
+)
 // 🐨 Memoize the ListItem here using React.memo
 
-function App() {
+const App = () => {
   const forceRerender = useForceRerender()
   const [inputValue, setInputValue] = React.useState('')
 
