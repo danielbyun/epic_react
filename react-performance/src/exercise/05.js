@@ -16,7 +16,7 @@ const initialGrid = Array.from({length: 100}, () =>
   Array.from({length: 100}, () => Math.random() * 100),
 )
 
-function appReducer(state, action) {
+const appReducer = (state, action) => {
   switch (action.type) {
     case 'TYPED_IN_DOG_INPUT': {
       return {...state, dogName: action.dogName}
@@ -33,13 +33,13 @@ function appReducer(state, action) {
   }
 }
 
-function AppProvider({children}) {
+const AppProvider = ({children}) => {
   const [state, dispatch] = React.useReducer(appReducer, {
     dogName: '',
     grid: initialGrid,
   })
   // 🐨 memoize this value with React.useMemo
-  const value = [state, dispatch]
+  const value = React.useMemo(() => [state, dispatch], [state])
   return (
     <AppStateContext.Provider value={value}>
       {children}
@@ -47,7 +47,7 @@ function AppProvider({children}) {
   )
 }
 
-function useAppState() {
+const useAppState = () => {
   const context = React.useContext(AppStateContext)
   if (!context) {
     throw new Error('useAppState must be used within the AppProvider')
@@ -92,11 +92,11 @@ function Cell({row, column}) {
 }
 Cell = React.memo(Cell)
 
-function DogNameInput() {
+const DogNameInput = () => {
   const [state, dispatch] = useAppState()
   const {dogName} = state
 
-  function handleChange(event) {
+  const handleChange = event => {
     const newDogName = event.target.value
     dispatch({type: 'TYPED_IN_DOG_INPUT', dogName: newDogName})
   }
@@ -119,7 +119,7 @@ function DogNameInput() {
   )
 }
 
-function App() {
+const App = () => {
   const forceRerender = useForceRerender()
   return (
     <div className="grid-app">
