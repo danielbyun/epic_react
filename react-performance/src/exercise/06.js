@@ -17,13 +17,13 @@ const initialGrid = Array.from({length: 100}, () =>
   Array.from({length: 100}, () => Math.random() * 100),
 )
 
-function appReducer(state, action) {
+const appReducer = (state, action) => {
   switch (action.type) {
     // we're no longer managing the dogName state in our reducer
     // 💣 remove this case
-    case 'TYPED_IN_DOG_INPUT': {
-      return {...state, dogName: action.dogName}
-    }
+    // case 'TYPED_IN_DOG_INPUT': {
+    //   return {...state, dogName: action.dogName}
+    // }
     case 'UPDATE_GRID_CELL': {
       return {...state, grid: updateGridCellState(state.grid, action)}
     }
@@ -36,10 +36,10 @@ function appReducer(state, action) {
   }
 }
 
-function AppProvider({children}) {
+const AppProvider = ({children}) => {
   const [state, dispatch] = React.useReducer(appReducer, {
     // 💣 remove the dogName state because we're no longer managing that
-    dogName: '',
+    // dogName: '',
     grid: initialGrid,
   })
   return (
@@ -51,7 +51,7 @@ function AppProvider({children}) {
   )
 }
 
-function useAppState() {
+const useAppState = () => {
   const context = React.useContext(AppStateContext)
   if (!context) {
     throw new Error('useAppState must be used within the AppProvider')
@@ -59,7 +59,7 @@ function useAppState() {
   return context
 }
 
-function useAppDispatch() {
+const useAppDispatch = () => {
   const context = React.useContext(AppDispatchContext)
   if (!context) {
     throw new Error('useAppDispatch must be used within the AppProvider')
@@ -105,17 +105,19 @@ function Cell({row, column}) {
 }
 Cell = React.memo(Cell)
 
-function DogNameInput() {
+const DogNameInput = () => {
   // 🐨 replace the useAppState and useAppDispatch with a normal useState here
   // to manage the dogName locally within this component
-  const state = useAppState()
-  const dispatch = useAppDispatch()
+  const [state, setState] = React.useState()
+  // const state = useAppState()
+  // const dispatch = useAppDispatch()
   const {dogName} = state
 
-  function handleChange(event) {
+  const handleChange = event => {
     const newDogName = event.target.value
     // 🐨 change this to call your state setter that you get from useState
-    dispatch({type: 'TYPED_IN_DOG_INPUT', dogName: newDogName})
+    setState(newDogName)
+    // dispatch({type: 'TYPED_IN_DOG_INPUT', dogName: newDogName})
   }
 
   return (
@@ -135,7 +137,7 @@ function DogNameInput() {
     </form>
   )
 }
-function App() {
+const App = () => {
   const forceRerender = useForceRerender()
   return (
     <div className="grid-app">
