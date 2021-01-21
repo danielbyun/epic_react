@@ -20,14 +20,52 @@ After that project, I have built some other automated tools for our database usi
 
 ### 11/23/2020
 
-> The beginning.
-
 The company I work for in Gangnam, SK, approved purchasing this course for me - hoping that this would help solidify the project that I am single-handedly in charge of and to help future React developers that they might hire.
 
 They did see how qualified Kent C. Dodd was and what sort of material he was offering - and that the course was available for a lifetime.
 
 I really put in all my effort to not skip anything and really get familiar with all the concepts that Kent stated that I should be familiar with. I attended his old Paypal workshop (uploaded on YouTube) to get to know his teaching style and other topics I might not know from JavaScript. But turns out just by reading his article I did not know that JavaScript had such capabilities as the ones Kotlin did.
 
-#### Section 1: Welcome to Epic React
+#### Section 1: Welcome to Epic React
+
+Went through how the course is set up, how to set up my machine to be able to run through the exercises, and what is expected of from taking this course.
+
+This course is set up interesting that I clone the workshop repo, complete the exercises, then run the test and the app.
 
 ---
+
+### 11/24/2020
+
+#### Section 2: React Fundamentals
+
+This section's prerequisites: [JavaScript to know for react](https://kentcdodds.com/blog/javascript-to-know-for-react)
+
+Kent recommends that you know enough about the closure, so I read this article that he suggested: [Closure](https://whatthefork.is/closure)
+
+Below I will add some key points that I have learned from going through the article.
+
+Since Kent said that knowing closure was important, I went ahead and also reviewed `scope` and `hoisting`.
+
+#### Closure:
+
+What I learned about closure is that most (if not all) JavaScript developers sort of use closure without realizing it.
+
+For example:
+
+```jsx
+
+let users = [“Alice”, “Dan”, “Jessica”];
+let query = “A”;
+let user = users.filter(user => user.startsWith(query));
+
+```
+
+The fact that we're able to use the query variable when it was declared `outside` of the `users.filter` but was still accessible means that we used `closure` here.
+
+That is the simplest way that can display how closure works, the closure also works with functions.
+
+- A simple example with functions
+
+```jsx
+const eat = () => {};
+```
