@@ -743,3 +743,700 @@ const makeTree = (categories, parent) => {
 ## 11/26/2020
 
 ### Promises
+
+I use Promises a lot in the application I build for work, but I thought I'd review from the beginning what Promise does and how it should be handled.
+
+A typical way someone would use Promises while fetching using an API:
+
+```jsx
+function GetGreetingForSubject({ subject }) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [greeting, setGreeting] = useState(null);
+
+  useEffect(() => {
+    async function fetchGreeting() {
+      try {
+        const response = await window.fetch('https://example.com/api/greeting');
+        const data = await response.json();
+        setGreeting(data.greeting);
+      } catch (error) {
+        setError(error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    setIsLoading(true);
+    fetchGreeting();
+  }, []);
+
+  return isLoading ? (
+    'loading...'
+  ) : error ? (
+    'ERROR!'
+  ) : greeting ? (
+    <div>
+      {greeting} {subject}
+    </div>
+  ) : null;
+}
+```
+
+Another example from (FFF)
+
+```jsx
+// sheeeesh callback HELL
+import loadImage from "../someImage";
+  let addImg = (src) => {
+  let imgElement = document.createElement("img");
+  imgElement.src = src;
+  document.body.appendChild(imgElement);
+}
+loadImage("images/dog1.jpg", (error, img1) => {
+  addImage(img1.src);
+  loadImage("images/dog2.jpg", (error, img2) => {
+    addImage(img2.src);
+    loadImage("images/dog3.jpg", (error, img3) => {
+      addImage(img3.src);
+   })
+  })
+ })
+
+// this code is not only ugly, it does not call in parallel!
+// ========= converting to using Promises ==========
+// loadImage callback
+function loadImage(url, callback) {
+   let image = new Image();
+   image.onload = function() {
+     callback(null, image);
+   }
+   image.onerror = function() {
+     let message = `Could not load image at ${url}`;
+     callback(new Error(msg);
+   }
+   image.src = url;
+ }
+export default loadImage;
+
+// converting above to Promise
+function loadImage(url) {
+  return new Promise((resolve, reject) => {
+   let image = new Image();
+   image.onload = function() {
+    resolve(image);
+   }
+   image.onerror = function() {
+    let message = `Could not load image at ${url}`;
+    reject(new Error(msg);
+   }
+   image.src = url;
+  })
+ }
+export default loadImage;
+
+// using Promise function we made above
+import loadImage from "../someImage";
+let addImg = (src) => {
+  let imgElement = document.createElement("img");
+  imgElement.src = src;
+  document.body.appendChild(imgElement);
+ } // still pretty bad
+loadImage("images/dog1.jpg").then(img1 => {
+ addImage(img1.src);
+  loadImage("images/dog2.jpg").then(img2 => {
+   addImage(img2.src);
+   loadImage("images/dog3.jpg").then(img3 => {
+    addImage(img3.src);
+  })
+ })
+})
+
+// better
+Promise.all([
+  loadImage("images/dog1.jpg")
+  loadImage("images/dog2.jpg")
+  loadImage("images/dog3.jpg")
+]).then((images) => {
+  // success
+  // should return an array of the results
+  images.forEach(img => addImg(img.src));
+}).catch((error) => {
+  // handle error here
+  // this will throw if ANY of those fail
+});
+
+```
+
+### Async / Await
+
+Spent a decent amount of time reviewing notes and writing some pointers on this article.
+
+Inside a function marked as async, you are allowed to place the await keyword in front of an expression that returns a promise. When you do, the execution of the async function is paused until the promise is **resolved.**
+
+Both Promises and Async / Await can be used together.
+
+```jsx
+// function that gets user
+async function fetchCatAvatars(userId) {
+  const response = await
+     fetch(`https://catappapi.herokuapp.com/users/${userId}`);
+  const user = await response.json();
+
+  // function that gets all the cats from that user
+  return await Promise.all(user.cats.map(async function(catId) {
+     const response = await
+       fetch(`https://catappapi.herokuapp.com/cats/${catId}`);
+     const catData = await response.json();
+     return catData.imageUrl;
+  })
+}
+```
+
+---
+
+## 11/27/2020
+
+### Started the React-Fundamentals Workshop! 🏄🏼
+
+- Exercises include background information, instructions, extra credit, tests, and the final version of the exercises.
+
+#### First Exercise: Basic JS "Hello World"
+
+- Pretty straightforward HTML stuff before beginning the React side.
+- One thing I learned is that you can generate a root node on the document object without having to type the element directly into the HTML. (From completing the extra credit)
+
+```jsx
+const rootNode = document.body.getRootNode();
+const rootElement = document.createElement('div'); // this creates the div element as the root node
+
+rootElement.id = 'root';
+
+// append the root node in the body tag
+rootNode.body.appendChild(rootElement);
+```
+
+---
+
+## 11/28/2020
+
+### Continue the react-fundamentals workshop
+
+#### Second Exercise: Intro to Raw React APIs
+
+- Intro to Raw React API
+- Got to practice using React.createElement, not using JSX yet.
+- Can execute React codes inside HTML by importing sripts
+
+```jsx
+const rootElement = document.getElementById('root'); // rendering point
+
+const element = React.createElement('div', {
+  className: 'container',
+  children: 'Hello World',
+});
+
+ReactDOM.render(element, rootElement);
+
+// extra credit: have multiple children
+const elementProps = {
+  className: 'container',
+  children: [
+    React.createElement('span', { key: 1 }, 'Hello '),
+    React.createElement('span', { key: 2 }, 'World'),
+  ],
+};
+const elementType = 'div';
+const reactElement = React.createElement(elementType, elementProps);
+
+ReactDOM.render(reactElement, rootElement);
+```
+
+#### Third Exercise: Using JSX
+
+Started getting into JSX
+
+Learned how to convert React.createElement into using JSX -- way more convenient.
+
+If you import the babel script, you can use it to compile it from JSX -> HTML elements (not suitable for production for obvious reasons)
+
+```jsx
+// 🐨 re-implement this using JSX!
+// const element = React.createElement('div', {
+//   className: 'container',
+//   children: 'Hello World',
+// })
+
+const element = <div className='container'>Hello World</div>;
+
+// extra credit (1)
+const className = 'container';
+const children = 'Hello World';
+const firstElement = <div className={className}>{children}</div>;
+const renderElement = (
+  <React.Fragment>
+    {element}
+    {firstElement}
+  </React.Fragment>
+);
+
+// extra credit (2)
+const props = { children, className };
+const secondElement = <div {...props} />;
+
+// 💰 there are a few subtle differences between JSX and HTML. One such
+// difference is how you apply a class to an element in JSX is by using
+
+// `className` rather than `class`!
+// 📜 You can learn the differences between JSX and HTML syntax from the React docs here:
+
+ReactDOM.render(element, document.getElementById('root'));
+```
+
+#### Fourth Exercise: Creating Custom Components
+
+- Last time using actual HTML
+
+```javascript
+<!-- Creating custom components -->
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@17.0.0/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@17.0.0/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.12.4/babel.js"></script>
+  <script src="https://unpkg.com/prop-types@15.7.2/prop-types.js"></script>
+
+  <script type="text/babel">
+    // 🐨 Make a function called `message` which returns the JSX we want to share
+    // ========== extra credit (2) ========== did it without noticing lol
+    const Message = ({className, children, ...props}) => (
+      <props.type className={className}>{children}</props.type>
+    )
+
+    // 🐨 use that function in place of the divs below with:
+    // 💰 {message({children: 'Hello World'})} {message({children: 'Goodbye World'})}
+    const element = (
+      <div className="container">
+      <Message type="div" className="message" children="Hello World"
+      />.
+      <Message type="div" className="message" children="Goodbye World"
+      />
+      </div>
+    )
+    // ========== extra credit (2) ==========
+    // I now konw what kent wants
+    const message = ({children}) => {
+      return <div className="message">{children}</div>
+    }
+    const originalElement = (
+      <div className="container">
+        <div>{message({children: 'Hello World'})}</div>
+        <div>{message({children: 'Goodbye World'})}</div>
+      </div>
+    )
+
+    // extra credit (1)
+    const helloElement = React.createElement(message, {children:
+      'Hello World'})
+    const byeElement = React.createElement(message, {children: 'Bye
+       World'})
+    const extraCreditOne = (
+      <div className="container">
+        {helloElement}
+        {byeElement}
+      </div>
+    )
+    // extra credit (2)
+    const secondElement = null
+    // extra credit (3) && extra credit (4)
+    const NewMessage = ({subject, greeting}) => {
+      return (
+        <div className="message">
+         {greeting}, {subject}
+        </div>
+      )
+    }
+    NewMessage.propTypes = {
+      greeting: PropTypes.string.isRequired,
+      subject: PropTypes.string.isRequired,
+    }
+    const thirdElement = (
+      <div className="container">
+        <NewMessage greeting="Hello" />
+        <NewMessage greeting="Bye" />
+      </div>
+    )
+    // extra credit (5)
+    const fifthElement = (
+      <React.Fragment>
+        <div>{message({children: 'Hello World'})}</div>
+        <div>{message({children: 'Goodbye World'})}</div>
+      </React.Fragment>
+    )
+      // 💯 This is only the first step to making actual React components. The rest is in the extra credit!
+      ReactDOM.render(thirdElement, document.getElementById('root'))
+  </script>
+</body>
+```
+
+#### Fifth Exercise: Styling
+
+- Starting to use JSX
+- Kent's answer is interesting because of a nested ternary statement like mine, he plucks in the size component directly by using the template literals
+
+```jsx
+// Styling
+import * as React from 'react'
+import '../box-styles.css'
+
+// 💰 Use the className for the size and style (backgroundColor) for the color
+// 💰 each of the elements should also have the "box" className applied
+// 🐨 add a className prop to each of these and apply the correct class names
+// 💰 Here are the available class names: box, box--large, box--medium, box--small
+// 🐨 add a style prop to each of them as well so their background color
+// matches what the text says it should be as well as `fontStyle: 'italic'`
+
+const font = {fontStyle: 'italic'}
+const smallBox =
+  <div
+    className="box box--small"
+    style={{backgroundColor: 'lightblue', ...font}}
+  >
+    small lightblue box
+  </div>
+)
+
+const mediumBox = (
+  <div className="box box--medium" style={{backgroundColor: 'pink', ...font}}>
+    medium pink box
+  </div>
+)
+
+const largeBox = (
+  <div className="box box--large" style={{backgroundColor: 'orange', ...font}}>
+    large orange box
+  </div>
+)
+
+// my answer
+const Box = ({className, style, children}) => {
+  const sizing =
+    className === 'small'
+      ? 'box box--small'
+      : className === 'medium'
+      ? 'box box--medium'
+      : className === 'large'
+      ? 'box box--large'
+      : 'box'
+
+  return (
+    <div className={sizing} style={style}>
+      {children}
+    </div>
+  )
+}
+
+// kent's answer
+const BoxImproved = ({className = '', size, style, ...otherProps}) => {
+  const sizeClassName = size ? `box--${size}` : ''
+  return (
+    <div
+      className={`box ${sizeClassName} ${className}`.trim()}
+      style={{...style}}
+      {...otherProps}
+    />
+  )
+}
+
+const App = () => {
+  return (
+    <div>
+      {smallBox}
+      {mediumBox}
+      {largeBox}
+      <Box
+        className="large"
+        style={{backgroundColor: 'purple', fontStyle: 'italic'}}
+      >
+        Large Box
+      </Box>
+      <BoxImproved
+        size="large"
+        style={{fontStyle: 'italic', backgroundColor: 'grey'}}
+      >
+        Large Box Improved
+      </BoxImproved>
+    </div>
+  )
+}
+export default App
+```
+
+#### Sixth Exercise: Forms
+
+- As extra credit, kent had us use useRef to keep track of the value of the input element, which was interesting and I did not think about using that because the ref can be mutated and that is a good way of keeping a ref with an HTML element.
+
+```jsx
+// Basic Forms
+import * as React from 'react';
+const UsernameForm = ({ onSubmitUsername }) => {
+  // 🐨 add a submit event handler here (`handleSubmit`).
+  // 💰 Make sure to accept the `event` as an argument and call
+  // `event.preventDefault()` to prevent the default behavior of form submit
+  // events (which refreshes the page).
+  // 🐨 get the value from the username input (using whichever method
+  // you prefer from the options mentioned in the instructions)
+  // 💰 For example: event.target.elements[0].value
+  // 🐨 Call `onSubmitUsername` with the value of the input
+  // 🐨 add the onSubmit handler to the <form> below
+  // 🐨 make sure to associate the label to the input.
+  // to do so, set the value of 'htmlFor' prop of the label to the id of input
+
+  const inputRef = React.useRef(null); // extra credit 1
+  // const [error, setError] = React.useState('')
+  const [inputValue, setInputValue] = React.useState('');
+
+  const handleChange = (e) => {
+    const value = e.target.value;
+    // setError(value !== value.toLowerCase() ? 'Username must be lower case' : '')
+    setInputValue(value.toLowerCase());
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // kent's way of getting the value
+    const newValue = e.target.elements.usernameInput.value;
+    console.log(newValue);
+
+    inputRef.current = inputValue;
+    onSubmitUsername(inputRef.current);
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div>
+        <div style={{ color: 'red' }} role='alert'>
+          {/* {error} */}
+        </div>
+        <label htmlFor='usernameInput'>Username:</label>
+        <input
+          onChange={handleChange}
+          type='text'
+          id='usernameInput'
+          ref={inputRef}
+          value={inputValue}
+        />
+      </div>
+      <button type='submit'>Submit</button>
+    </form>
+  );
+};
+
+const App = () => {
+  const onSubmitUsername = (username) =>
+    alert(`You entered:
+      ${username}`);
+  return <UsernameForm onSubmitUsername={onSubmitUsername} />;
+};
+
+export default App;
+```
+
+#### Seventh Exercise: Rendering Arrays
+
+- In this example, I got to experience what not having the key prop does to an array especially when you're adding and removing elements inside the looped list.
+- I also got to see how things get mixed up when you just use the index and not a unique `key`.
+- Very excited to see the inner workings of how React renders a list that that key prop becomes so important when rendering a looped list.
+
+```jsx
+// Rendering Lists
+import * as React from 'react';
+const allItems = [
+  { id: 'apple', value: '🍎 apple' },
+  { id: 'orange', value: '🍊 orange' },
+  { id: 'grape', value: '🍇 grape' },
+  { id: 'pear', value: '🍐 pear' },
+];
+
+const App = () => {
+  const [items, setItems] = React.useState(allItems);
+
+  const addItem = () => {
+    setItems([
+      ...items,
+      allItems.find((i) => !items.map(({ id }) => id).includes(i.id)),
+    ]);
+  };
+
+  const removeItem = (item) => {
+    setItems(items.filter((i) => i.id !== item.id));
+  };
+  return (
+    <div className='keys'>
+      <button disabled={items.length >= allItems.length} onClick={addItem}>
+        add item
+      </button>
+      <ul style={{ listStyle: 'none', paddingLeft: 0 }}>
+        {items.map((item, index) => (
+          // 🐨 add a key prop to the <li> below. Set it to item.id
+          <li key={item.id}>
+            <button onClick={() => removeItem(item)}>remove</button>
+            <label htmlFor={`${item.id}-input`}>{item.value}</label>
+            <input id={`${item.id}-input`} defaultValue={item.value} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default App;
+```
+
+### Completed The React Fundamentals Workshop! 🧟‍♂️
+
+---
+
+## 11/29/20
+
+### Started The React-Hooks Workshop 🚀
+
+Prereq: watch Kent's workshop on React Hooks -- [link]("https://www.youtube.com/watch?v=zWsZcBiwgVE&list=PLV5CVI1eNcJgNqzNwcs4UKrlJdhfDjshf")
+
+#### First Exercise: `useState` -- greeting
+
+- Use `useState` to keep track of the value of the input.
+
+```jsx
+import React, { useState } from 'react';
+
+const Greeting = ({ initialName = '' }) => {
+  const [name, setName] = useState(initialName);
+  const handleChange = (e) => {
+    setName(e.target.value);
+  };
+
+  return (
+    <div>
+      <form>
+        <label htmlFor='name'>Name: </label>
+        <input value={name} onChange={handleChange} id='name' />
+      </form>
+      {name ? <strong>Hello {name}</strong> : 'Please type your name'}
+    </div>
+  );
+};
+
+const App = () => {
+  return <Greeting />;
+};
+
+export default App;
+```
+
+#### Second Exercise: `useEffect` - persistent state
+
+- I've gotten REALLY familiar with the useEffect hook once I converted the majority of the class components into functional components.
+
+- The first couple of exercises were pretty straight forward, but once I got to the Custom Hook and Flexible localStorage Hook sections, I got to really see the potential of writing custom Hooks.
+
+* **localStorage useEffect**
+
+```jsx
+import React, { useEffect, useState } from 'react';
+
+const Greeting = ({ initialName = '' }) => {
+  const [name, setName] = useState(
+    window.localStorage.getItem('name') || initialName
+  );
+
+  useEffect(() => {
+    window.localStorage.setItem('name', name);
+  }, [name]);
+
+  const handleChange = (e) => {
+    setName(e.target.value);
+  };
+
+  return (
+    <div>
+      <form>
+        <label htmlFor='name'>Name: </label>
+        <input value={name} onChange={handleChange} id='name' />
+      </form>
+    </div>
+  );
+};
+
+const App = () => {
+  return <Greeting />;
+};
+
+export default App;
+```
+
+- Lazy State Initialization
+
+```jsx
+// old way
+const [name, setName] = useState(window.localStorage.getItem("name") || initialValue);
+
+// lazy state init
+const [name, setName] = useState(() => {}))
+```
+
+Lazy state init gets triggered first (as seen on Hooks Flow video) and is used to optimize computationally expensive processes (such as reading from localStorage).
+
+- Effect Dependencies
+
+```jsx
+useEffect(() => {
+  window.localStorage.setItem('name', name);
+}); // runs every time component gets re-rendered
+
+useEffect(() => {
+  window.localStorage.setItem('name', name);
+}, [name]); // runs whenever name is changed
+```
+
+In the most dumbed-down sense - effect dependencies are the little array brackets at the end of the `useEffect` call that accepts arguments, which tells React to re-render when that dependency has been changed.
+
+- Custom Hook
+  Instead of writing `window.localStorage.setItem()` or `window.localStorage.getItem()` every time, we can write a custom hook that will do that for us.
+
+```jsx
+import React, { useEffect, useState } from 'react'
+
+const useLocalStorageState = () => {
+  const [state, setState] = useState(() => window.localStorage.getItem(key) || defaultValue)
+
+  useEffect(() => {
+    window.localStorage.setItem(key, state)
+  }, [key, state])
+
+  return [state, setState]
+}
+
+const Greeting = ({ initialName = '' }) => {
+  const [name, setName] = useLocalStorageState('name', initialName)
+  const handleChange = (e) => {
+    setName(e.target.value)
+  }
+
+  return (
+    <div>
+      <form>
+        <label>Name: </label>
+        <input />
+      </form>
+      {name ? <strong>Hello {name}</strong> : "Please type your name"}
+    <div>
+  )
+}
+
+const App = () => {
+  return <Greeting />
+}
+
+export default App
+```
