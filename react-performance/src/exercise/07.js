@@ -32,7 +32,7 @@ const App = () => {
           <Counter />
         </div>
         <div>
-          Unprofiled counter
+          Unprofiled counter (test)
           <Counter />
         </div>
       </React.Profiler>
