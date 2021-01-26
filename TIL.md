@@ -38,7 +38,7 @@ This course is set up interesting that I clone the workshop repo, complete the e
 
 #### Section 2: React Fundamentals
 
-This section's prerequisites: [JavaScript to know for react](https://kentcdodds.com/blog/javascript-to-know-for-react)
+This section's prerequisites: [JavaScript to know for react](https://kentcdodds.com/blog/jsx-to-know-for-react)
 
 Kent recommends that you know enough about the closure, so I read this article that he suggested: [Closure](https://whatthefork.is/closure)
 
@@ -260,7 +260,7 @@ const counter = () => {
 ```jsx
 
 /*
-  One thing to note about the example above is that the opening and the closing parenthesis (. This is a common way to leverage the arrow function's implicit return capabilities when working with JSX.
+  One thing to note about the example above is that the opening and the closing parenthesis (. This is a common way to leverage the arrow function's implicit return capabilities when working with jsx.
 */
 
 const getFive = () => 5;
@@ -924,7 +924,7 @@ rootNode.body.appendChild(rootElement);
 #### Second Exercise: Intro to Raw React APIs
 
 - Intro to Raw React API
-- Got to practice using React.createElement, not using JSX yet.
+- Got to practice using React.createElement, not using jsx yet.
 - Can execute React codes inside HTML by importing sripts
 
 ```jsx
@@ -951,16 +951,16 @@ const reactElement = React.createElement(elementType, elementProps);
 ReactDOM.render(reactElement, rootElement);
 ```
 
-#### Third Exercise: Using JSX
+#### Third Exercise: Using jsx
 
-Started getting into JSX
+Started getting into jsx
 
-Learned how to convert React.createElement into using JSX -- way more convenient.
+Learned how to convert React.createElement into using jsx -- way more convenient.
 
-If you import the babel script, you can use it to compile it from JSX -> HTML elements (not suitable for production for obvious reasons)
+If you import the babel script, you can use it to compile it from jsx -> HTML elements (not suitable for production for obvious reasons)
 
 ```jsx
-// 🐨 re-implement this using JSX!
+// 🐨 re-implement this using jsx!
 // const element = React.createElement('div', {
 //   className: 'container',
 //   children: 'Hello World',
@@ -983,11 +983,11 @@ const renderElement = (
 const props = { children, className };
 const secondElement = <div {...props} />;
 
-// 💰 there are a few subtle differences between JSX and HTML. One such
-// difference is how you apply a class to an element in JSX is by using
+// 💰 there are a few subtle differences between jsx and HTML. One such
+// difference is how you apply a class to an element in jsx is by using
 
 // `className` rather than `class`!
-// 📜 You can learn the differences between JSX and HTML syntax from the React docs here:
+// 📜 You can learn the differences between jsx and HTML syntax from the React docs here:
 
 ReactDOM.render(element, document.getElementById('root'));
 ```
@@ -996,7 +996,7 @@ ReactDOM.render(element, document.getElementById('root'));
 
 - Last time using actual HTML
 
-```javascript
+```jsx
 <!-- Creating custom components -->
 <body>
   <div id="root"></div>
@@ -1007,7 +1007,7 @@ ReactDOM.render(element, document.getElementById('root'));
   <script src="https://unpkg.com/prop-types@15.7.2/prop-types.js"></script>
 
   <script type="text/babel">
-    // 🐨 Make a function called `message` which returns the JSX we want to share
+    // 🐨 Make a function called `message` which returns the jsx we want to share
     // ========== extra credit (2) ========== did it without noticing lol
     const Message = ({className, children, ...props}) => (
       <props.type className={className}>{children}</props.type>
@@ -1081,7 +1081,7 @@ ReactDOM.render(element, document.getElementById('root'));
 
 #### Fifth Exercise: Styling
 
-- Starting to use JSX
+- Starting to use jsx
 - Kent's answer is interesting because of a nested ternary statement like mine, he plucks in the size component directly by using the template literals
 
 ```jsx
@@ -1668,5 +1668,481 @@ export default App
 10. App: `useEffect(() => {}, [showChild])` -> cleanup
 11. App: `useEffect(() => {})`
 12. App: `useEffect(() => {}, [showChild])`
+
+---
+
+## 11/30/20
+
+### Fourth Exercise: Lifting State
+
+- The exercise was pretty straightforward:
+
+  - Practicing passing state down via props to children components or vice versa.
+
+```jsx
+import React, { useState } from 'react';
+
+const Name = ({ name, onNameChange }) => {
+  return (
+    <div>
+      <label htmlFor='name'>Name: </label>
+      <input id='name' value={name} onChange={onNameChange} />
+    </div>
+  );
+};
+
+const FavoriteAnimal = ({ animal, onAnimalChange }) => {
+  return (
+    <div>
+      <label htmlFor='animal'>Favorite Animal: </label>
+      <input id='animal' value={animal} onChange={onAnimalChange} />
+    </div>
+  );
+};
+
+const Display = ({ name, animal }) => {
+  return <div>{`Hey you ${name}, your favorite animal is: ${animal}!`}</div>;
+};
+
+const App = () => {
+  const [name, setName] = useState('');
+  const [animal, setAnimal] = useState('');
+
+  return (
+    <form>
+      <Name name={name} onNameChange={(e) => setName(e.target.value)} />
+      <FavoriteAnimal animal={animal} onAnimalChange={setAnimal} />
+      <Display animal={animal} name={name} />
+    </form>
+  );
+};
+
+export default App;
+```
+
+_Colocating State:_
+
+I don't even know what this means.
+
+- Colocating just means to keep the `state` as close as to where it's relevant as possible.
+- Try not to lift or drop too much
+
+* Only use props and state when it's absolutely needed.
+
+Improving the above example to only using states that use them
+
+```jsx
+import React, { useState } from 'react';
+
+const Name = () => {
+  const [name, setName] = useState('');
+
+  return (
+    <div>
+      <label htmlFor='name'>Name: </label>
+      <input id='name' value={name} onChange={setName} />
+    </div>
+  );
+};
+
+const FavoriteAnimal = ({ animal, onAnimalChange }) => {
+  return (
+    <div>
+      <label htmlFor='animal'>Favorite Animal: </label>
+      <input id='animal' value={animal} onChange={onAnimalChange} />
+    </div>
+  );
+};
+
+const Display = ({ animal }) => {
+  return <div>{`Your favorite animal is: ${animal}!`}</div>;
+};
+
+const App = () => {
+  const [animal, setAnimal] = useState('');
+
+  return (
+    <form>
+      <Name />
+      <FavoriteAnimal animal={animal} onAnimalChange={setAnimal} />
+      <Display animal={animal} />
+    </form>
+  );
+};
+
+export default App;
+```
+
+### Fifth Exercise: `useState`--tic tact toe
+
+Managed State & Derived State
+
+- Instead of managing each variable as a state, if the variable depends on the changes from one unified point, use `derived state` like so:
+
+```jsx
+const Board = () => {
+  const [squares, setSquares] = React.useState(Array(9).fill(null));
+
+  const [nextValue, setNextValue] = useState(calculateNextValue(squares));
+
+  const [winner, setWinner] = useState(calculateWinner(squares));
+
+  const [status, setStatus] = useState(calculateStatus(squares));
+
+  function selectSquare(square) {
+    if (winner || squares[square]) {
+      return;
+    }
+
+    const squaresCopy = [...squares];
+    squaresCopy[square] = nextValue;
+
+    const newNextValue = calculateNextValue(squaresCopy);
+    const newWinner = calculateWinner(squaresCopy);
+
+    const newStatus = calculateStatus(newWinner, squaresCopy, newNextValue);
+
+    setSquares(squaresCopy);
+    setNextValue(newNextValue);
+    setWinner(newWinner);
+
+    setStatus(newStatus);
+  }
+
+  // return beautiful jsx
+};
+```
+
+- The problem with this approach is that when the state starts getting complicated the state _may_ fall out of sync with the true component state (`squares`) . It could fall out of sync (for example) because we forgot to update it for a complex sequence of interactions.
+
+* The best way is to approach this is to have the `squares` (the main state) to update other variables that depend on the `squares` state.
+
+```jsx
+function Board() {
+  const [squares, setSquares] = useState(Array(9).fill(null));
+  const nextValue = calculateNextValue(squares);
+  const winner = calculateWinner(squares);
+  const status = calculateStatus(winner, squares, nextValue);
+
+  function selectSquare(square) {
+    if (winner || squares[square]) {
+      return;
+    }
+
+    const squaresCopy = [...squares];
+    squaresCopy[square] = nextValue;
+    setSquares(squaresCopy);
+  }
+
+  function selectTwoSquares(square1, square2) {
+    if (winner || squares[square1] || squares[square2]) {
+      return;
+    }
+
+    const squaresCopy = [...squares];
+    squaresCopy[square1] = nextValue;
+    squaresCopy[square2] = nextValue;
+    setSquares(squaresCopy);
+  }
+
+  // return beautiful jsx
+}
+```
+
+### Preserve State in LocalStorage
+
+- Very similar to the previous exercise
+
+```jsx
+// retrieve on load
+const [squares, setSquares] = useState(
+  () =>
+    JSON.parse(window.localStorage.getItem('squares')) || Array(9).fill(null)
+);
+
+// set on change
+useEffect(() => {
+  window.localStorage.setItem('squares', JSON.stringify(squares));
+}, [squares]);
+```
+
+### `useLocalStorageState` Custom HOok
+
+- We created this custom hook in the previous exercise, just implementing it without using `window.localStorage.getIem() || window.localStorage.getItem()`
+
+```jsx
+const [squares, setSquares] = useLocalStorageState(
+  'squares',
+  Array(9).fill(null)
+);
+```
+
+- We don't need the `useEffect` here because useLocalStorageState checks whether it is a `get` or a `set` depending on if the key already exists or not
+- When we use `setSquares` anywhere, the `useLocalStorageState` hook will check
+
+#### Add Game History Feature -- REVIEW NEEDED
+
+- This one was a bit tougher than the other ones.
+- Use localStorage to store each marked `squres`
+- Store the # of steps
+
+---
+
+## 12/1/20
+
+Continuing the Game History Feature on the `useState: tic tac toe` section:
+
+- TODO: just gonna pass this now -- bue definitely do come back tot his and try implementing it again. (After completing the workshop)
+
+#### Sixth exercise: `useRef` and `useEffect` -- DOM Interaction
+
+- Use `React.useRef` to create a reference on an HTML DOM to be able to manipulate it directly.
+
+```jsx
+// useRef and useEffect: DOM interaction
+import React, { useEffect } from 'react';
+// eslint-disable-next-line no-unused-vars
+import VanillaTilt from 'vanilla-tilt';
+
+const Tilt = ({ children }) => {
+  // 🐨 create a ref here with React.useRef()
+  const tiltRef = React.useRef();
+  useEffect(() => {
+    const tiltNode = tiltRef.current;
+
+    VanillaTilt.init(tiltNode, {
+      max: 25,
+      speed: 400,
+      glare: true,
+      'max-glare': 0.5,
+    });
+
+    return () => {
+      tiltNode.vanillaTilt.destroy();
+    };
+  }, []);
+  return (
+    <div className='tilt-root' ref={tiltRef}>
+      <div className='tilt-child'>{children}</div>
+    </div>
+  );
+};
+
+const App = () => {
+  return (
+    <Tilt>
+      <div className='totally-centered'>vanilla-tilt.js</div>
+    </Tilt>
+  );
+};
+
+export default App;
+```
+
+#### Seventh Exercise: `useEffect` -- HTTP requests
+
+The next four items I have used a lot because of my work project and the size of the project required me to research and implement.
+
+#### Fetch Data
+
+- Fetch data from an API with `useEffect asynchronously`:
+
+```jsx
+const [pokemon, setPokemon] = useState({});
+
+useEffect(() => {
+  fetchPokemon(pokemonName).then((res) => setPokemon(res));
+}, [pokemonName]);
+```
+
+#### Handle Errors
+
+- By having an `error` state, you can handle errors and display to the user when needed:
+
+```jsx
+const [error, setError] = useState('');
+
+useEffect(() => {
+  fetchPokemon(pokemonName)
+    .then((res) => setPokemon(res))
+    .catch((err) => setError(err));
+}, [pokemonName]);
+
+// use div with role = "alert" for screen readers
+```
+
+#### Use a status
+
+- Just like the `error` state, you can manage the `status` state to display the process of the app to the user
+- Kent recommends `idle`, `pending`, `resolved`, `rejected`, instead of `isLoading` to deliver a clear message to the process of the `fetch` call.
+
+```jsx
+const [status, setStatus] = useState('idle');
+
+useEffect(() => {
+  setStatus('pending');
+
+  fetchPokemon(pokemonName)
+    .then((res) => {
+      setStatus('resolved');
+      setPokemon(res);
+    })
+    .catch((err) => {
+      setStatus('rejected');
+      setError(err);
+    });
+}, [pokemonName]);
+
+// just like the error message, you can render the status
+```
+
+#### Store the State in an Object
+
+- When you have separate `setState` calls, whether it'd be `setError`, `setStatus`… You can easily run into bugs because the component will re-render when a `setState` is called.
+
+* In order to prevent that, we can store the `state` as an object.
+
+```jsx
+const [state, setState] = useState({
+  pokemon: {},
+  error: '',
+  status: 'idle',
+});
+
+useEffect(() => {
+  setState({
+    status: 'pending',
+  });
+
+  fetchPokemon(pokemonName).then((res) => {
+    setState({
+      status: 'resolved',
+      pokemon: res,
+    }).catch((err) => {
+      setState({
+        status: 'rejected',
+        error: err,
+      });
+    });
+  });
+}, [pokemonName]);
+```
+
+---
+
+## 12/2/20
+
+Continuing `useEffect` -- HTTP requests
+
+**_ `ErrorBoundary` Component _** --- **REVIEW NEEDED**
+
+- Instead of wrapping the `ErrorBoundary` on a lot of different components, you can make customized `ErrorBoundary` components with an appropriate `FallbackComponent` to better utilize the `ErrorBoundary` without having to wrap the entire application.
+
+```jsx
+const ErrorFallback = ({ error, resetErrorBoundary }) => {
+  return (
+    <div role='alert'>
+      There was an error:{' '}
+      <pre style={{ whiteSpace: 'normal' }}>{error.message}</pre>
+      <button onClick={resetErrorBoundary}>Try Again</button>
+    </div>
+  );
+};
+
+// ...App component (return statement)
+<ErrorBoundary FallbackComponent={ErrorFallback}>
+  <AppToRender state={someState} />
+</ErrorBoundary>;
+```
+
+#### Re-mount the `ErrorBoundary`
+
+- One bug in that `ErrorBoundary` is that once it's been mounted it will not unmount and display the correct child component after.
+
+* In order to fix that we can put in a `key` prop to tell the `ErrorBoundary` to unmount and re-mount whenever that prop has been changed.
+
+```jsx
+const ErrorFallback = ({ error, resetErrorBoundary }) => {
+  return (
+    <div role='alert'>
+      There was an error:{' '}
+      <pre style={{ whiteSpace: 'normal' }}>{error.message}</pre>
+      <button onClick={resetErrorBoundary}>Try Again</button>
+    </div>
+  );
+};
+
+// ...App component (return statement)
+<ErrorBoundary key={someState} FallbackComponent={ErrorFallback}>
+  <AppToRender state={someState} />
+</ErrorBoundary>;
+```
+
+#### Use `react-error-boundary`
+
+[react-error-boundary link](https://github.com/bvaughn/react-error-boundary)
+
+- Instead of writing our own `ErrorBoundary` components, we can take advantage of a third-party library called `react-error-boundary`
+
+* Very similar implementation but flexible so that we don't have to write them from scratch
+
+* Also, we can leverage using `React Hooks` instead of having to write them in `classes` which is the only way to write `ErrorBoundary` components at this time of writing (12/3/20)
+
+#### Reset the `ErrorBoundary`
+
+- There is a very TINY bug where the state is re-initialized, the app will seem like it's starting from scratch again instead of seamlessly transitioning into the `pending` state again.
+- Okay that was a little confusing but here are the steps
+
+In this pokemon example in the course,
+
+1. `pokemon` is null, and the app will prompt the user to type a name to search a `pokemon`.
+2. when the user types the pokemon name, it'll execute an HTTP request and show the display.
+
+3. We have handled the error using the `ErrorBoundary` component, and the `status` inside the `state`.
+
+4. So the bug appears when the user types a non-existent pokemon and gets an error message, and when the user types a different name the app will reset to the beginning stage - prompting the user to type a pokemon name, which can seem buggy.
+
+So we're going to use `onReset` prop in the `ErrorBoundary` from `react-error-boundary` to reset the `PokemonName`
+
+```jsx
+// this is one of the ways to do it but kind of a workaround
+const [{status, pokemon, errorMessage}], setState] = useState({
+  status: "idle",
+  pokemon: null,
+  errorMessage: ""
+})
+
+// leveraging the onReset prop
+const handleReset = () => setPokemonName("");
+
+// App.js
+return (
+  ...app,
+  <ErrorBoundary key={pokemonName} FallbackComponent={ErrorFallback} onReset={handleReset} resetKeys={[pokemonName]}>
+    <PokemonInfo pokemonName={pokemonName} />
+  </ErrorBoundary>
+)
+```
+
+#### use `resetKeys`
+
+We're using `ErrorBoundary` to handle all different types of errors. But now we don't have that feature of the user being able to just change the `pokemonName` to re-render the app.
+
+`react-error-boundary` offers another useful prop called `resetKeys` to keep track of and re-render the child component.
+
+`resetKeys` is an array of values - when changed, the `ErrorBoundary` will reset itself and re-render.
+
+```jsx
+<ErrorBoundary
+  key={pokemonName}
+  FallbackComponent={ErrorFallback}
+  onReset={handleReset}
+  resetKeys={[pokemonName]}
+>
+  <PokemonInfo pokemonName={pokemonName} />
+</ErrorBoundary>
+```
+
+### Completed the React Hooks Workshop! 💸
 
 ---
