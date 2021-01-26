@@ -1429,7 +1429,7 @@ const Greeting = ({ initialName = '' }) => {
         <label>Name: </label>
         <input />
       </form>
-      {name ? <strong>Hello {name}</strong> : "Please type your name"}
+      {name ? <strong>Hello {name}</strong> : 'Please type your name'}
     <div>
   )
 }
@@ -1440,3 +1440,233 @@ const App = () => {
 
 export default App
 ```
+
+- Flexible localStorage Hook
+
+How can we make the above custom hook more flexible for the users to use and make it even **more** efficient?!
+
+```jsx
+// ================ custom hooks =================================
+import React, { useEffect, useState, useRef } from 'react'
+
+const useLocalStorageState = (
+  key,
+  defaultValue = '',
+  { serialize: JSON.stringify, deserialize = JSON.parse } = {}
+) => {
+  const [state, setState] = useState(() => {
+    const valueInLocalStorage = window.localStorage.getItem(key)
+    if (valueInLocalStorage) {
+
+      // the try/catch is here in case the localStorage value was
+      // set before we had the serialization in place
+      try {
+        return deserialize(valueInLocalStroage)
+      } catch (err) {
+        return window.localStorage.removeItem(key)
+      }
+    }
+    return typeof defaultValue === 'function' ? defaultValue() : defaultValue
+    })
+  }
+
+  const prevKeyRef = useRef(key)
+
+  useEffect(() => {
+    const prevKEy = prevKey.current
+    if (prevKey !== key) {
+      window.localStorage.removeItem(prevKey)
+    }
+    prevKey.current = key
+    window.localStorage.setItem(key, serialize(state))
+  }, [key, state, serialize])
+
+  return [state, setState]
+}
+
+// ================================================================
+const Greeting = ({ initialName: '' }) => {
+  const [name, setName] = useLocalStorageState('name', initialName)
+  const handleChange = e => {
+    setName(e.target.value)
+  }
+  return (
+    <div>
+      <form>
+        <label htmlFor='name'>Name: </label>
+        <input value={name} onChange={handleChange} id='name' />
+      </form>
+      {name ? <strong>Hello {name}</strong> : 'Please type your name'}
+    </div>
+  )
+}
+```
+
+- As you can see: the component that uses the custom hooks doesn't change much, but the custom hooks are capable of receiving different types of params without having the apps explode.
+
+#### Third Exercise: Hooks Flow
+
+- Diagram
+
+![react hooks flow](https://cdn-images-1.medium.com/max/1600/1*ec7c-jxoT64JdaPfMGp7gA.png 'React Hooks Flow')
+
+- Example:
+
+```jsx
+// Hook flow
+import React, {useEffect} from 'react'
+
+function Child() {
+  console.log('%c Child: render start', 'color: MediumSpringGreen')
+  const [count, setCount] = React.useState(() => {
+    console.log('%c Child: useState(() => 0)', 'color: tomato')
+    return 0
+  })
+
+  useEffect(() => {
+    console.log('%c    Child: useEffect(() => {})', 'color: LightCoral')
+
+    return () => {
+      console.log( '%c Child: useEffect(() => {}) cleanup 🧹', 'color: LightCoral')
+    }
+  })
+
+  useEffect(() => {
+    console.log(
+      '%c Child: useEffect(() => {}, [])', 'color: MediumTurquoise',
+    )
+
+    return () => {
+      console.log( '%c Child: useEffect(() => {}, []) cleanup 🧹', 'color: MediumTurquoise')
+    }
+  }, [])
+
+  useEffect(() => {
+    console.log('%c Child: useEffect(() => {}, [count])', 'color: HotPink')
+
+    return () => {
+      console.log('%c Child: useEffect(() => {}, [count]) cleanup 🧹', 'color: HotPink')
+    }
+  }, [count])
+
+  const element = (
+    <button onClick={() => setCount(previousCount => previousCount + 1)}>
+      {count}
+    </button>
+  )
+  console.log('%c Child: render end', 'color: MediumSpringGreen')
+
+  return element
+}
+
+function App() {
+  console.log('%cApp: render start', 'color: MediumSpringGreen')
+  const [showChild, setShowChild] = React.useState(() => {
+    console.log('%cApp: useState(() => false)', 'color: tomato')
+
+    return false
+  })
+
+  useEffect(() => {
+    console.log('%cApp: useEffect(() => {})', 'color: LightCoral')
+    return () => {
+      console.log('%cApp: useEffect(() => {}) cleanup 🧹', 'color:
+         LightCoral')
+    }
+  })
+
+  useEffect(() => {
+    console.log('%cApp: useEffect(() => {}, [])', 'color:
+      MediumTurquoise')
+    return () => {
+      console.log(
+      '%cApp: useEffect(() => {}, []) cleanup 🧹',
+      'color: MediumTurquoise',
+     )
+   }
+ }, [])
+
+  useEffect(() => {
+    console.log('%cApp: useEffect(() => {}, [showChild])', 'color:
+      HotPink')
+    return () => {
+      console.log(
+        '%cApp: useEffect(() => {}, [showChild]) cleanup 🧹',
+        'color: HotPink',
+      )
+    }
+  }, [showChild])
+
+  const element = (
+    <>
+      <label>
+        <input
+          type="checkbox"
+          checked={showChild}
+          onChange={e => setShowChild(e.target.checked)}
+        />{' '}
+        show child
+      </label>
+      <div
+        style={{
+          padding: 10,
+          margin: 10,
+          height: 50,
+          width: 50,
+          border: 'solid',
+        }}
+      >
+        {showChild ? <Child /> : null}
+      </div>
+    </>
+  )
+  console.log('%cApp: render end', 'color: MediumSpringGreen')
+
+  return element
+}
+
+export default App
+```
+
+#### Hooks Flow
+
+**Render:**
+
+1. App: render start
+2. App: `useState(() => false)` // lazy state intializer
+3. App: render ends
+4. App: `useEffect(() => {})`
+5. App: `useEffect(() => {}, [])`
+6. App: `useEffect(() => {}, [showChild])`
+
+**Update:**
+
+1. App: render start
+2. App: (parent component) render end
+   - Child: render start
+   - Child: `useState(() => 0)`
+   - Child: render end
+   - Child: `useEffect(() => {})`
+   - Child: `useEffect(() => {}, [])`
+   - Child: `useEffect(() => {}, [count])`
+3. App: `useEffect(() => {})` -> cleanup
+4. App: `useEffect(() => {}, [showChild])` -> cleanup
+5. App: `useEffect(() => {})`
+6. App: `useEffect(() => {}, [showChild])` (SHOW CHILD TRIGGERED)
+   - Child: render start
+   - Child: render end
+   - Child: `useEffect(() => {})` -> cleanup
+   - Child: `useEffect(() => {}, [count])` -> cleanup
+   - Child: `useEffect(() => {})`
+   - Child: `useEffect(() => {}, [count])` (HIDE CHILD TRIGGERED)
+7. App: render start
+8. App: render end (all cleanups run on the child bc of the unmount)
+   - Child: `useEffect(() => {})` -> cleanup
+   - Child: `useEffect(() => {}, [])` -> cleanup
+   - Child: `useEffect(() => {}, [count])` -> cleanup
+9. App: `useEffect(() => {})` -> cleanup
+10. App: `useEffect(() => {}, [showChild])` -> cleanup
+11. App: `useEffect(() => {})`
+12. App: `useEffect(() => {}, [showChild])`
+
+---
