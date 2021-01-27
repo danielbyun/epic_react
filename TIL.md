@@ -2034,7 +2034,7 @@ useEffect(() => {
 
 Continuing `useEffect` -- HTTP requests
 
-**_ `ErrorBoundary` Component _** --- **REVIEW NEEDED**
+**`ErrorBoundary` Component** --- **REVIEW NEEDED**
 
 - Instead of wrapping the `ErrorBoundary` on a lot of different components, you can make customized `ErrorBoundary` components with an appropriate `FallbackComponent` to better utilize the `ErrorBoundary` without having to wrap the entire application.
 
