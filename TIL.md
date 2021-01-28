@@ -2137,7 +2137,8 @@ We're using `ErrorBoundary` to handle all different types of errors. But now we 
   key={pokemonName}
   FallbackComponent={ErrorFallback}
   onReset={handleReset}
-  resetKeys={[pokemonName]}>
+  resetKeys={[pokemonName]}
+>
   <PokemonInfo pokemonName={pokemonName} />
 </ErrorBoundary>
 ```
@@ -3094,12 +3095,14 @@ const UserSettings = () => {
             setFormState(user);
             userDispatch({ type: 'reset' });
           }}
-          disabled={!isChanged || isPending}>
+          disabled={!isChanged || isPending}
+        >
           Reset
         </button>
         <button
           type='submit'
-          disabled={(!isChanged && !isRejected) || isPending}>
+          disabled={(!isChanged && !isRejected) || isPending}
+        >
           {isPending
             ? '...'
             : isRejected
@@ -3131,7 +3134,8 @@ const App = () => {
         borderRadius: 4,
         padding: 10,
         overflow: 'scroll',
-      }}>
+      }}
+    >
       <UserProvider>
         <UserSettings />
         <UserDataDisplay />
@@ -3633,7 +3637,8 @@ const Menu = React.memo(function Menu({
           item={item}
           index={index}
           selectedItem={selectedItem}
-          highlightedIndex={highlightedIndex}>
+          highlightedIndex={highlightedIndex}
+        >
           {item.name}
         </ListItem>
       ))}
@@ -3699,7 +3704,8 @@ const Menu = React.memo(function Menu({
           item={item}
           index={index}
           isSelected={selectedItem?.id === item.id}
-          isHighlighted={highlightedIndex === index}>
+          isHighlighted={highlightedIndex === index}
+        >
           {item.name}
         </ListItem>
       ))}
@@ -4016,17 +4022,105 @@ Took some time off!
 
 ## 1/11/21
 
+Extra Credit 2 (Consuming Components) + Extra Credit 3 (Slice of App State):
+
 ## 1/11/21 - 1/17/21
+
+Ok - really. Enough taking time off this course. I need to get back to it.
 
 ## 1/18/21
 
+I only took this day off because I wanted to test my video-editing skills - to see if I still got it and apparently I do!
+
+Going to purchase an anamorphic lens and begin making quick little Instagram videos just for fun.
+
 ## 1/19/21
 
-### Started
+Extra Credit 4 (Use Recoil): Bring in Recoil - create a custom hook to update the cell atoms using recoil, remove memoization on the components that didn't need them anymore due to recoil.
+
+> _Always think about the abstraction you're using, don't just willy nilly apply all these complexities._
+
+### Started 💻 Production Performance Monitoring 💻
 
 ### Exercise: Add Performance Monitoring
 
+```jsx
+import * as React from 'react';
+import reportProfile from '../report-profile';
+
+const Counter = () => {
+  const [count, setCount] = React.useState(0);
+  const increment = () => setCount((c) => c + 1);
+
+  return <button onClick={increment}>{count}</button>;
+};
+
+const App = () => {
+  return (
+    <div>
+      <React.Profiler id='counter' onRender={reportProfile}>
+        <div>
+          Profiled counter
+          <Counter />
+        </div>
+        <div>
+          Unprofiled counter
+          <Counter />
+        </div>
+      </React.Profiler>
+    </div>
+  );
+};
+
+export default App;
+```
+
+- **The start time** is when React begins rendering this update.
+
+* ** The actual duration** is the time spent rendering the committed update.
+
+* **The base duration** is the estimated time to render the entire subtree without memoization - this can give you an idea of some optimizations that you could potentially make.
+
+* **The commit time** is when React actually committed the update. \*relative to start time. You can subtract the two and get an idea for that actual duration.
+
 ### Extra Credit 1: Use Trace API
+
+```jsx
+import * as React from 'react';
+import { unstable_trace as trace } from 'scheduler/tracing';
+import reportProfile from '../report-profile';
+
+const Counter = () => {
+  const [count, setCount] = React.useState(0);
+  // 1st arg = the name of the thing we're tracing
+  // 2nd arg = when this interaction started
+  // 3rd arg = callback func for the thing that we want to have happen
+  const increment = trace('click', performance.now(), () =>
+    setCount((c) => c + 1)
+  );
+
+  return <button onClick={increment}>{count}</button>;
+};
+
+const App = () => {
+  return (
+    <div>
+      <React.Profiler id='counter' onRender={reportProfile}>
+        <div>
+          Profiled counter
+          <Counter />
+        </div>
+        <div>
+          Unprofiled counter
+          <Counter />
+        </div>
+      </React.Profiler>
+    </div>
+  );
+};
+
+export default App;
+```
 
 ### End of React Performance Workshop
 
