@@ -2137,8 +2137,7 @@ We're using `ErrorBoundary` to handle all different types of errors. But now we 
   key={pokemonName}
   FallbackComponent={ErrorFallback}
   onReset={handleReset}
-  resetKeys={[pokemonName]}
->
+  resetKeys={[pokemonName]}>
   <PokemonInfo pokemonName={pokemonName} />
 </ErrorBoundary>
 ```
@@ -3095,14 +3094,12 @@ const UserSettings = () => {
             setFormState(user);
             userDispatch({ type: 'reset' });
           }}
-          disabled={!isChanged || isPending}
-        >
+          disabled={!isChanged || isPending}>
           Reset
         </button>
         <button
           type='submit'
-          disabled={(!isChanged && !isRejected) || isPending}
-        >
+          disabled={(!isChanged && !isRejected) || isPending}>
           {isPending
             ? '...'
             : isRejected
@@ -3134,8 +3131,7 @@ const App = () => {
         borderRadius: 4,
         padding: 10,
         overflow: 'scroll',
-      }}
-    >
+      }}>
       <UserProvider>
         <UserSettings />
         <UserDataDisplay />
@@ -3637,8 +3633,7 @@ const Menu = React.memo(function Menu({
           item={item}
           index={index}
           selectedItem={selectedItem}
-          highlightedIndex={highlightedIndex}
-        >
+          highlightedIndex={highlightedIndex}>
           {item.name}
         </ListItem>
       ))}
@@ -3704,8 +3699,7 @@ const Menu = React.memo(function Menu({
           item={item}
           index={index}
           isSelected={selectedItem?.id === item.id}
-          isHighlighted={highlightedIndex === index}
-        >
+          isHighlighted={highlightedIndex === index}>
           {item.name}
         </ListItem>
       ))}
@@ -4129,3 +4123,275 @@ export default App;
 Been updating `TIL.md` on here.
 
 Working on other aspects of my life - but the goal is to finish testing and suspense by the end of Feb
+
+## 2/2/21
+
+Start reading pre-requisites for testing
+
+[JavaScript Test](https://kentcdodds.com/blog/but-really-what-is-a-javascript-test)
+
+[JavaScript Mock](https://kentcdodds.com/blog/but-really-what-is-a-javascript-mock)
+
+### But Really, What is a JavaScript Test?
+
+#### Example
+
+Let's write tests for these two functions
+
+```jsx
+const sum = (a, b) => a + b;
+const subtract = (a, b) => a - b;
+
+module.exports = { sum, subtract };
+```
+
+**Step 1**
+
+```jsx
+// basic test
+const actual = true;
+const expected = false;
+
+if (actual !== expected) {
+  throw new Error(`${actual} is not ${expected}`);
+}
+```
+
+> A test is code that throws an error when the actual result of something does not match the expected output.
+
+_It is alwasy easier to test 'pure functions' like the example_
+
+> The part that says `actual !== expected` is called an 'assertion'
+
+```jsx
+// test for the functions above
+const { sum, subtract } = require('./math');
+
+let result, expected;
+
+result = sum(3, 7);
+expected = 10;
+
+if (result !== expected) {
+  throw new Error(`${result} is not equal to ${expected}`);
+}
+
+result = subtract(7, 3);
+expected = 4;
+
+if (result !== expected) {
+  throw new Error(`${result} is not equal to ${expected}`);
+}
+```
+
+RESULT:
+
+```jsx
+$ node 1.js
+/Users/kdodds/Desktop/js-test-example/1.js:8
+  throw new Error(`${result} is not equal to ${expected}`)
+  ^
+Error: -4 is not equal to 10
+    at Object.<anonymous> (/Users/kdodds/Desktop/js-test-example/1.js:8:9)
+    at Module._compile (module.js:635:30)
+    at Object.Module._extensions..js (module.js:646:10)
+    at Module.load (module.js:554:32)
+    at tryModuleLoad (module.js:497:12)
+    at Function.Module._load (module.js:489:3)
+    at Function.Module.runMain (module.js:676:10)
+    at startup (bootstrap_node.js:187:16)
+    at bootstrap_node.js:608:3
+```
+
+> One of the most important parts of testing frameworks (or assertion libraries) is how helpful their error messages are.
+
+**Step 2**
+
+```jsx
+const assert = require('assert');
+const { sum, subtract } = require('./math');
+
+let result, expected;
+
+result = sum(3, 7);
+expected = 10;
+assert.strictEqual(result, expected);
+
+result = subtract(7, 3);
+expected = 4;
+assert.strictEqual(result, expected);
+```
+
+RESULT:
+
+```jsx
+$ node 2.js
+assert.js:42
+  throw new errors.AssertionError({
+  ^
+AssertionError [ERR_ASSERTION]: -4 === 10
+    at Object.<anonymous> (/Users/kdodds/Desktop/js-test-example/2.js:8:8)
+    at Module._compile (module.js:635:30)
+    at Object.Module._extensions..js (module.js:646:10)
+    at Module.load (module.js:554:32)
+    at tryModuleLoad (module.js:497:12)
+    at Function.Module._load (module.js:489:3)
+    at Function.Module.runMain (module.js:676:10)
+    at startup (bootstrap_node.js:187:16)
+    at bootstrap_node.js:608:3
+```
+
+**Step 3**
+
+```jsx
+const { sum, subtract } = require('./math');
+
+let result, expected;
+
+result = sum(3, 7);
+expected = 10;
+expect(result).toBe(expected);
+
+result = subtract(7, 3);
+expected = 4;
+expect(result).toBe(expected);
+
+const expect = (actual) => {
+  return {
+    toBe(expected) {
+      if (actual !== expected) {
+        throw new Error(`${actual} is not equal to ${expected}`);
+      }
+    },
+  };
+};
+```
+
+```jsx
+$ node 3.js
+/Users/kdodds/Desktop/js-test-example/3.js:17
+        throw new Error(`${actual} is not equal to ${expected}`)
+        ^
+Error: -4 is not equal to 10
+    at Object.toBe (/Users/kdodds/Desktop/js-test-example/3.js:17:15)
+    at Object.<anonymous> (/Users/kdodds/Desktop/js-test-example/3.js:7:16)
+    at Module._compile (module.js:635:30)
+    at Object.Module._extensions..js (module.js:646:10)
+    at Module.load (module.js:554:32)
+    at tryModuleLoad (module.js:497:12)
+    at Function.Module._load (module.js:489:3)
+    at Function.Module.runMain (module.js:676:10)
+    at startup (bootstrap_node.js:187:16)
+    at bootstrap_node.js:608:3
+```
+
+**Step 4**
+
+> How would you see which function was broken?
+
+```jsx
+const { sum, subtract } = require('./math');
+
+test('sum adds numbers', () => {
+  const result = sum(3, 7);
+  const expected = 10;
+
+  expect(result).toBe(expected);
+});
+
+test('subtract subtracts numbers', () => {
+  const result = subtract(7, 3);
+  const expected = 4;
+
+  expect(result).toBe(expected);
+});
+
+const test = (title, callback) => {
+  try {
+    callback();
+    console.log(`✓ ${title}`);
+  } catch (error) {
+    console.error(`✕ ${title}`);
+    console.error(error);
+  }
+};
+
+const expect = (actual) => {
+  return {
+    toBe(expected) {
+      if (actual !== expected) {
+        throw new Error(`${actual} is not equal to ${expected}`);
+      }
+    },
+  };
+};
+```
+
+RESULT:
+
+```jsx
+$ node 4.js
+✕ sum adds numbers
+Error: -4 is not equal to 10
+    at Object.toBe (/Users/kdodds/Desktop/js-test-example/4.js:29:15)
+    at test (/Users/kdodds/Desktop/js-test-example/4.js:6:18)
+    at test (/Users/kdodds/Desktop/js-test-example/4.js:17:5)
+    at Object.<anonymous> (/Users/kdodds/Desktop/js-test-example/4.js:3:1)
+    at Module._compile (module.js:635:30)
+    at Object.Module._extensions..js (module.js:646:10)
+    at Module.load (module.js:554:32)
+    at tryModuleLoad (module.js:497:12)
+    at Function.Module._load (module.js:489:3)
+    at Function.Module.runMain (module.js:676:10)
+✓ subtract subtracts numbers
+```
+
+**Step 5**
+
+```jsx
+const { sum, subtract } = require('./math');
+
+test('sum adds numbers', () => {
+  const result = sum(3, 7);
+  const expected = 10;
+  expect(result).toBe(expected);
+});
+
+test('subtract subtracts numbers', () => {
+  const result = subtract(7, 3);
+  const expected = 4;
+
+  expect(result).toBe(expected);
+});
+```
+
+RESULT:
+
+```jsx
+$ jest
+ FAIL  ./5.js
+  ✕ sum adds numbers (5ms)
+  ✓ subtract subtracts numbers (1ms)
+● sum adds numbers
+expect(received).toBe(expected)
+    Expected value to be (using Object.is):
+      10
+    Received:
+      -4
+      4 |   const result = sum(3, 7)
+      5 |   const expected = 10
+    > 6 |   expect(result).toBe(expected)
+      7 | })
+      8 |
+      9 | test('subtract subtracts numbers', () => {
+      at Object.<anonymous>.test (5.js:6:18)
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 passed, 2 total
+Snapshots:   0 total
+Time:        0.6s, estimated 1s
+Ran all test suites.
+```
+
+### Conclusion
+
+> JavaScript test is some code which sets up some state, performs some action, and makes an assertion on the new state.
