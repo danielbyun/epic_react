@@ -4395,3 +4395,234 @@ Ran all test suites.
 ### Conclusion
 
 > JavaScript test is some code which sets up some state, performs some action, and makes an assertion on the new state.
+
+### But Really, What is a JavaScript Mock?
+
+**Step 0**
+
+```jsx
+import { getWinner } from './utils';
+
+const thumbWar = (player1, player2) => {
+  const numberToWin = 2;
+  let player1Wins = 0;
+  let player2Wins = 0;
+
+  while (player1Wins < numberToWin && player2Wins < numberToWin) {
+    const winner = getWinner(player1, player2);
+
+    if (winne === player1) {
+      player1Wins++;
+    } else if (winner === player2) {
+      player2Wins++;
+    }
+  }
+
+  return player1Wins > player2Wins ? player1 : player2;
+};
+
+export default thumbWar;
+```
+
+We're going to pretend that the function is making a call to some third party machine learning service that has a **a testing environment we don't control and is unreliable so we want to mock it out for tests**.
+
+> This is one of the (rare) situations where mocking is really your only choice to reliably test your code.
+
+```jsx
+// test code
+import thumbwar from '../thumb-war';
+
+test('returns winner', () => {
+  const winner = thumbWar('Ken Wheeler', 'Kent C. Dodds');
+  expect(['Ken Wheeler', 'Kent C. Dodds'].includes(winner)).toBe(true);
+});
+
+/*
+  only assert that the winner is one of the players, and maybe that's enough. 
+  But if we really want to ensure that our `thumbWar` function is integrating properly with `getWinner`, then we'll want to create a MOCK for it and asser on a real winner.
+ */
+```
+
+**Step 1**
+
+The Simplest form of mocking is _monkey-patching values_.
+
+```jsx
+import thumbWar from '../thumb-war';
+import * as utils from '../utils';
+
+test('returns winner', () => {
+  const originialGetWinner = utils.getWinner;
+  // eslint-disable-next-line import/namespace
+  utils.getWinner = (p1, p2) => p2;
+
+  const winner = thumbWar('Ken Wheeler', 'Kent C. Dodds');
+  expect(winner).toBe('Kent C. Dodds');
+
+  // eslint-disable-next-line import/namespace
+  utils.getWinner = originalGetWinner;
+});
+```
+
+- Things to notice:
+
+  1. Import the utils module as a `*` import so we have an object that we can manipulate.
+  2. Store the original function at the beginning of our test and restore it at the end so other tests aren't impacted by the changes we're making to the `utils` module.
+
+- **the actual mock**
+
+  - `utils.getWinner = (p1, p2) => p2`
+
+- This is monkey-patching mocking. It's effective (we're now able to ensure there's a specific winner of the thumbWar game), but there are some limitations to this.
+  1. One thing that's annoying is the eslint warning, so we've disabled that (again, don't actually do this as it makes your code non-spec compliant!
+  2. Again, more on this later). Also, we don't actually know for sure whether the `utils.getWinner` function was called as much as it should have been (twice, for a best 2 out of 3 game).
+  3. This may or may not be important for the application, but it's important for what I'm trying to teach you so let's improve that!
+
+**Step 2**
+
+```jsx
+import thumbWar from '../thumb-war';
+import * as utils from '../utils';
+
+test('returns winner', () => {
+  const originalGetWinner = utils.getWinner;
+  // eslint-disable-next-line import/namespace
+  utils.getWinner = (...args) => {
+    utils.getWinner.mock.calls.push(args);
+    return args[1];
+  };
+  utils.getWinner.mock = { calls: [] };
+
+  const winner = thumbWar('Ken Wheeler', 'Kent C. Dodds');
+  expect(winner).toBe('Kent C. Dodds');
+  expect(utils.getWinner.mock.calls).toHaveLength(2);
+  utils.getWinner.mock.calls.forEach((args) => {
+    expect(args).toEqual(['Ken Wheeler', 'Kent C. Dodds']);
+  });
+
+  // eslint-disable-next-line import/namespace
+  utils.getWinner = originalGetWinner;
+});
+```
+
+- Two assertions
+  ```jsx
+  expect(utils.getWinner.mock.calls).toHaveLength(2);
+  utils.getWinner.mock.calls.forEach((args) => {
+    expect(args).toEqual(['Ken Wheeler', 'Kent C. Dodds']);
+  });
+  ```
+
+> Now so long as our mock can model what the real world version does, we can get back a little confidence that our code is working despite having to mock out what getWinner is actually doing.
+
+**Step 3**
+
+```jsx
+import thumbWar from '../thumb-war';
+import * as utils from '../utils';
+
+test('returns winner', () => {
+  const originalGetWinner = utils.getWinner;
+  // eslint-disable-next-line import/namespace
+  utils.getWinner = jest.fn((p1, p2) => p2);
+
+  const winner = thumbWar('Ken Wheeler', 'Kent C. Dodds');
+  expect(winner).toBe('Kent C. Dodds');
+  expect(utils.getWinner).toHaveBeenCalledTimes(2);
+  utils.getWinner.mock.calls.forEach((args) => {
+    expect(args).toEqual(['Ken Wheeler', 'Kent C. Dodds']);
+  });
+
+  // eslint-disable-next-line import/namespace
+  utils.getWinner = originalGetWinner;
+});
+```
+
+- We've wrapped the mock impelentation with `jest.fn`
+
+- This does all the same stuff, but we're using a special Jest mock function, some special assertions we can use for that purpose
+
+**Step 4**
+
+- Jest has a utility called `spyOn`.
+
+```jsx
+import thumbWar from '../thumb-war';
+import * as utils from '../utils';
+
+test('returns winner', () => {
+  jest.spyOn(utils, 'getWinner');
+  utils.getWinner.mockImplementation((p1, p2) => p2);
+
+  const winner = thumbWar('Ken Wheeler', 'Kent C. Dodds');
+  expect(winner).toBe('Kent C. Dodds');
+
+  utils.getWinner.mockRestore();
+});
+```
+
+- Mock functions are also called spies (which is why the API for this is called `spyOn`). By default, Jest will keep the original implementation of `getWinner` but still keep track of how it's called.
+- We don't want the original implementation to be called so we use `mockImplementation` to mock out what happens when it's called
+- Then at the end we use `mockStore` to clean up after ourselves just as we were before.
+
+**Step 5**
+
+- Addressing eslint errors
+
+  ```jsx
+  import thumbWar from '../thumb-war';
+  import * as utilsMock from '../utils';
+
+  jest.mock('../utils', () => {
+    return {
+      getWinner: jest.fn((p1, p2) => p2),
+    };
+  });
+
+  test('returns winner', () => {
+    const winner = thumbWar('Ken Wheeler', 'Kent C. Dodds');
+    expect(utilsMock.getWinner).toHaveBeenCalledTimes(2);
+    utilsMock.getWinner.mock.calls.forEach((args) => {
+      expect(args).toEqual(['Ken Wheeler', 'Kent C. Dodds']);
+    });
+  });
+  ```
+
+**Step 6**
+
+- If you don't want to duplicate code, you can have better file structure
+
+  ```jsx
+  other/whats-a-mock/
+  ├── __mocks__
+  │   └── utils.js
+  ├── __tests__/
+  ├── thumb-war.js
+  └── utils.js
+  ```
+
+- And inside the `__mocks__/utils.js`
+
+  ```jsx
+  // __mocks__/utils.js
+  export const getWinner = jest.fn((p1, p2) => p2);
+  ```
+
+- Updated Test
+
+  ```jsx
+  // __tests__/thumb-war.js
+  import thumbWar from '../thumb-war';
+  import * as utilsMock from '../utils';
+
+  jest.mock('../utils');
+
+  test('returns winner', () => {
+    const winner = thumbWar('Ken Wheeler', 'Kent C. Dodds');
+    expect(winner).toBe('Kent C. Dodds');
+    expect(utilsMock.getWinner).toHaveBeenCalledTimes(2);
+    utilsMock.getWinner.mock.calls.forEach((args) => {
+      expect(args).toEqual(['Ken Wheeler', 'Kent C. Dodds']);
+    });
+  });
+  ```
