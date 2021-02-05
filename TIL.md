@@ -4626,3 +4626,99 @@ test('returns winner', () => {
     });
   });
   ```
+
+---
+
+## Exercise 1: Render Counter Component
+
+> "The more your tests resemble the way your software is used, the more
+> confidence they can give you." -
+> @kentcdodds
+
+- Always Consider who the users are:
+  1. The end user that's interacting with our code (clicking buttons/etc)
+  2. The developer user that's actually using our code (rendering it, calling your functions, etc.)
+  3. Often a _third_ user CREEPS into our test and we want to avoid them as much as possible. [The Test User](https://kentcdodds.com/blog/avoid-the-test-user)
+- Assertions from Jest: [Assertions](https://jestjs.io/docs/en/expect)
+
+### Testing Implementation Details Notes:
+
+> testinig implementation details is a recipe for a disaster. Why is that? And what does it even mean?
+
+- Why testing implementation details is badddd.
+
+1. Can break when you refactor application code. **False negatives**
+2. May not fail when you break application code. **False positives**
+
+- Example:
+
+  - code example
+
+    ```jsx
+    // accordion.js
+    import * as React from 'react';
+    import AccordionContents from './accordion-contents';
+    class Accordion extends React.Component {
+      state = { openIndex: 0 };
+      setOpenIndex = (openIndex) => this.setState({ openIndex });
+      render() {
+        const { openIndex } = this.state;
+        return (
+          <div>
+            {this.props.items.map((item, index) => (
+              <>
+                <button onClick={() => this.setOpenIndex(index)}>
+                  {item.title}
+                </button>
+                {index === openIndex ? (
+                  <AccordionContents>{item.contents}</AccordionContents>
+                ) : null}
+              </>
+            ))}
+          </div>
+        );
+      }
+    }
+    export default Accordion;
+    ```
+
+  - testing implementation detail
+
+    ```jsx
+    // __tests__/accordion.enzyme.js
+    import * as React from 'react';
+    // if you're wondering why not shallow,
+    // then please read https://kcd.im/shallow
+    import Enzyme, { mount } from 'enzyme';
+    import EnzymeAdapter from 'enzyme-adapter-react-16';
+    import Accordion from '../accordion';
+    // Setup enzyme's react adapter
+    Enzyme.configure({ adapter: new EnzymeAdapter() });
+    test('setOpenIndex sets the open index state properly', () => {
+      const wrapper = mount(<Accordion items={[]} />);
+      expect(wrapper.state('openIndex')).toBe(0);
+      wrapper.instance().setOpenIndex(1);
+      expect(wrapper.state('openIndex')).toBe(1);
+    });
+    test('Accordion renders AccordionContents with the item contents', () => {
+      const hats = { title: 'Favorite Hats', contents: 'Fedoras are classy' };
+      const footware = {
+        title: 'Favorite Footware',
+        contents: 'Flipflops are the best',
+      };
+      const wrapper = mount(<Accordion items={[hats, footware]} />);
+      expect(wrapper.find('AccordionContents').props().children).toBe(
+        hats.contents
+      );
+    });
+    ```
+
+### The Test User Blogpost Notes:
+
+> How your UI code has only two users, but the wrong tests can add a third.
+
+> The more your tests resemble the way your software is used, the more confidence they can give you.
+
+> **Knowing how your software is used is really valuable. It gives you a guide for knowing how to test the component.**
+
+- The above statement couldn't be more truer (is that right? lol) - the application I am developing do not have a lot of testing right now, so I need to manually check each individual component. And I tend to miss out a lot because I do not necessarily know how the end users are using the application.
