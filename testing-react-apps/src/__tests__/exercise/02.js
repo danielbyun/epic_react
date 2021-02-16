@@ -2,7 +2,7 @@
 // http://localhost:3000/counter
 
 import * as React from 'react'
-import ReactDOM from 'react-dom'
+// import ReactDOM from 'react-dom'
 // 🐨 import the `render` and `fireEvent` utilities from '@testing-library/react'
 import {render, fireEvent} from '@testing-library/react'
 import Counter from '../../components/counter'
@@ -30,7 +30,7 @@ test('counter increments and decrements when the buttons are clicked', () => {
   const [decrement, increment] = container.querySelectorAll('button')
   const message = container.firstChild.querySelector('div')
 
-  expect(message.textContent).toBe('Current count: 0')
+  expect(message).toHaveTextContent('Current count: 0')
 
   // 🐨 replace the next two statements with `fireEvent.click(button)`
   fireEvent.click(increment)
@@ -40,7 +40,7 @@ test('counter increments and decrements when the buttons are clicked', () => {
   //   button: 0,
   // })
   // increment.dispatchEvent(incrementClickEvent)
-  expect(message.textContent).toBe('Current count: 1')
+  expect(message).toHaveTextContent('Current count: 1')
 
   fireEvent.click(decrement)
   // const decrementClickEvent = new MouseEvent('click', {
@@ -49,5 +49,5 @@ test('counter increments and decrements when the buttons are clicked', () => {
   //   button: 0,
   // })
   // decrement.dispatchEvent(decrementClickEvent)
-  expect(message.textContent).toBe('Current count: 0')
+  expect(message).toHaveTextContent('Current count: 0')
 })

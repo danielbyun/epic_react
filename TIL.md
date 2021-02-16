@@ -4727,7 +4727,9 @@ test('returns winner', () => {
   ```
 - You should always keep your tests isolated to prevent problems from piling up. These issues are hard to detect and will give you mountains of headaches.
 - `div.remove()` above works but what if the tests fail before removing the div?
-  - <a id="clean-up">`beforeEach`</a> comes super handy in this case.
+
+- #### `beforeEach`
+  - super handy in this case.
     ```jsx
     beforeEach(() => {
       document.body.innerHTML = '';
@@ -4772,7 +4774,7 @@ test('returns winner', () => {
 
 - Update previously completed exercises that I didn't update on here.
 
-## Simple Test with React Testing Library
+## Started Simple Test with React Testing Library
 
 ### Intro
 
@@ -4784,8 +4786,50 @@ test('returns winner', () => {
 - With `React Testing Library`'s render, you can provide your own base elements if you want to, but the library will default to a new `div`.
 - The library keeps track of all the divs.
   - It will keep track of all the divs that it's creating as well as removing the divs and finally unmounting the components that were rendered.
-- It cleans up for you automatically, [so no need to worry about the clean up](#clean-up).
+- It cleans up for you automatically, [so no need to worry about the clean up](#beforeEach).
 
 ### Exercise 2: Firing Events
 
+- Little background info on `act`
+
+  - `fireEvent` is wrapped with `act()`. If you ever see an act warning, then that's something you need to deal with, but you never need to wrap a call to `fireEvent` in `act`.
+  - DO NOT wrap the `fireEvent` with another `act`!!
+
+- By using the container from using `React Testing Library`'s render, we can do the same thing when getting the buttons
+
+  ```jsx
+  const [decrement, increment] = container.querySelectorAll('button');
+  const message = container.firstChild.querySelector('div');
+
+  // instead of making a new MouseEvent, we can use fireEvent from the library to 'fire' the event.
+  fireEvent.click(increment);
+  expect(message.textContent).toBe('Current count: 1'); // passing
+
+  fireEvent.click(decrement);
+  expect(message.textContent).toBe('Current count: 0'); // passing
+  ```
+
+- `fireEvent` cleans up bunch of boilerplate code by not using `MouseEvent` and also has a variety of actions you can call (pretty much every event that is available to the browser you have available in here to fire the different events that your components might be listening to).
+
 ### Extra Credit: Assertions
+
+- Let's make the error messages a little bit more helpful
+
+```jsx
+// use jest DOM assertion
+import '@testing-library/jest-dom';
+
+// you can import in the file, or have a jest.config.js file
+
+// or with CRA, you need to use the setupTests.js and import it on there globally
+
+expect(message).toHaveTextContent('Current count: 2');
+```
+
+- The error message will now be:
+  > Expected element to have text content:
+  > `Current count: 2`
+  > Received:
+  > `Current count: 1`
+
+## Finished Simple Test with React Testing Library
