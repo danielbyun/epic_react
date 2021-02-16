@@ -3668,7 +3668,7 @@ const ListItem = React.memo(function ListItem({
 });
 ```
 
-# 🍸🥂🍾🎉🎊 1/1/21 HAPPY NEW YEAR!! 🍸🥂🍾🎉🎊
+## 🍸🥂🍾🎉🎊 1/1/21 HAPPY NEW YEAR!! 🍸🥂🍾🎉🎊
 
 ## 1/2/21
 
@@ -4629,96 +4629,163 @@ test('returns winner', () => {
 
 ---
 
-## Exercise 1: Render Counter Component
+## 2/9/21
+
+## Simple Test with ReactDOM
+
+### Intro
 
 > "The more your tests resemble the way your software is used, the more
 > confidence they can give you." -
 > @kentcdodds
 
 - Always Consider who the users are:
+
   1. The end user that's interacting with our code (clicking buttons/etc)
-  2. The developer user that's actually using our code (rendering it, calling your functions, etc.)
-  3. Often a _third_ user CREEPS into our test and we want to avoid them as much as possible. [The Test User](https://kentcdodds.com/blog/avoid-the-test-user)
-- Assertions from Jest: [Assertions](https://jestjs.io/docs/en/expect)
+  2. The developer user that's actually using our code (rendering it, calling your functions, etc.
 
-### Testing Implementation Details Notes:
+### Exercise 1: Render Counter Component
 
-> testinig implementation details is a recipe for a disaster. Why is that? And what does it even mean?
+- In order to render a component while testing with the ReactDOM you have to render it like you did when you created the jsx element.
+- You need to render the element, but also pass the second argument as a `div`, which should be inside the document body so that the user can interact with it.
 
-- Why testing implementation details is badddd.
+  ```jsx
+  const div = document.createElement('div');
+  document.body.append(div);
+  ReactDOM.render.append(div);
+  ```
 
-1. Can break when you refactor application code. **False negatives**
-2. May not fail when you break application code. **False positives**
+### Exercise 2: Test Counter Component
 
-- Example:
+- We want to test the Counter Component, and this component contains a message that we can test if the component has been rendered correctly.
 
-  - code example
+  ```jsx
+  // expect() is called an assertion
+  // the message has to be exactly the same
+  expect(message.textContent).toBe('Current count: 0'); // should pass
+  ```
+
+- You ALWAYS need to see if the test is not giving false positives by making it fail.
+
+  ```jsx
+  expect(message.textContent).toBe('Current count: 1'); // should fail
+  ```
+
+### Exercise 3: Increment and Decrement Buttons
+
+- Here we can interact with the Counter component and make sure that the `increment` and `decrement` buttons do the right things.
+
+  1. Grab the buttons
+
+  ```jsx
+  // grabs all the buttons in the div
+  // decrement first because of the way the component is designed
+  const [decrement, increment] = div.querySelectorAll('button')
+
+  // Counter Component
+  <div>
+    <div> Current count: {count} </div>
+    <button onClick={decrement}>Decrement</button>
+    <button onClick={increment}>Increment</button>
+  </div>
+  ```
+
+  2. Make assertions
+
+  - Increment
 
     ```jsx
-    // accordion.js
-    import * as React from 'react';
-    import AccordionContents from './accordion-contents';
-    class Accordion extends React.Component {
-      state = { openIndex: 0 };
-      setOpenIndex = (openIndex) => this.setState({ openIndex });
-      render() {
-        const { openIndex } = this.state;
-        return (
-          <div>
-            {this.props.items.map((item, index) => (
-              <>
-                <button onClick={() => this.setOpenIndex(index)}>
-                  {item.title}
-                </button>
-                {index === openIndex ? (
-                  <AccordionContents>{item.contents}</AccordionContents>
-                ) : null}
-              </>
-            ))}
-          </div>
-        );
-      }
-    }
-    export default Accordion;
+    // === assume the test has been cleared ===
+    increment.click();
+    expect(message.textContent).toBe('Current count: 1'); // passing
+
+    // === assume the test has been cleared ===
+    // break the assertion
+    increment.click();
+    expect(message.textContent).toBe('Current count: 2'); // failing
     ```
 
-  - testing implementation detail
+  - Decrement
 
     ```jsx
-    // __tests__/accordion.enzyme.js
-    import * as React from 'react';
-    // if you're wondering why not shallow,
-    // then please read https://kcd.im/shallow
-    import Enzyme, { mount } from 'enzyme';
-    import EnzymeAdapter from 'enzyme-adapter-react-16';
-    import Accordion from '../accordion';
-    // Setup enzyme's react adapter
-    Enzyme.configure({ adapter: new EnzymeAdapter() });
-    test('setOpenIndex sets the open index state properly', () => {
-      const wrapper = mount(<Accordion items={[]} />);
-      expect(wrapper.state('openIndex')).toBe(0);
-      wrapper.instance().setOpenIndex(1);
-      expect(wrapper.state('openIndex')).toBe(1);
-    });
-    test('Accordion renders AccordionContents with the item contents', () => {
-      const hats = { title: 'Favorite Hats', contents: 'Fedoras are classy' };
-      const footware = {
-        title: 'Favorite Footware',
-        contents: 'Flipflops are the best',
-      };
-      const wrapper = mount(<Accordion items={[hats, footware]} />);
-      expect(wrapper.find('AccordionContents').props().children).toBe(
-        hats.contents
-      );
+    // === assume the test has been cleared ===
+    decrement.click();
+    expect(message.textContent).toBe('Current Count: -1'); // passing
+
+    // === assume the test has been cleared ===
+    decrement.click();
+    expect(message.textContent).toBe('Current Count: -2'); // failing
+    ```
+
+### Exercise 4: Cleaning up Test Environments
+
+- Notice the assumption I had to put in there, that is a big issue when testing.
+  ```jsx
+  // 🐨 cleanup by removing the div from the page (💰 div.remove())
+  // 🦉 If you don't cleanup, then it could impact other tests and/or cause a memory leak
+  div.remove();
+  ```
+- You should always keep your tests isolated to prevent problems from piling up. These issues are hard to detect and will give you mountains of headaches.
+- `div.remove()` above works but what if the tests fail before removing the div?
+  - <a id="clean-up">`beforeEach`</a> comes super handy in this case.
+    ```jsx
+    beforeEach(() => {
+      document.body.innerHTML = '';
     });
     ```
 
-### The Test User Blogpost Notes:
+### Extra Credit: Add use dispatchEvent
 
-> How your UI code has only two users, but the wrong tests can add a third.
+- When we're using `clickEvent` that works for this case but sometimes you need to include the `MouseOverEvent` and `clickEvent` will not suffice.
+- `dispatchEvent` lets you:
 
-> The more your tests resemble the way your software is used, the more confidence they can give you.
+  - Configure that `MouseEvent` if you want to change what button is being used to click.
 
-> **Knowing how your software is used is really valuable. It gives you a guide for knowing how to test the component.**
+- Changing `increment` and `decrement` clicks to using `dispatchEvent`
 
-- The above statement couldn't be more truer (is that right? lol) - the application I am developing do not have a lot of testing right now, so I need to manually check each individual component. And I tend to miss out a lot because I do not necessarily know how the end users are using the application.
+  ```jsx
+  // increment
+  const incrementClickEvent = new MouseEvent('click', {
+    bubbles: true, // it will bubble up - react requires bubbles
+    cancelable: true,
+    button: 0, // left click
+  });
+  increment.dispatchEvent(incrementClickEvent);
+  expect(message.textContent).toBe('Current count: 1');
+
+  // decrement
+  const decrementClickEvent = new MouseEvent('click', {
+    bubbles: true,
+    cancelable: true,
+    button: 0,
+  });
+  decrement.dispatchEvent(decrementClickEvent);
+  expect(message.textContent).toBe('Current count: 0');
+  ```
+
+- We have the `bubbles: true` because the button will bubble up, which is important because React uses event delegation, and a bubbling is required for event delegation to work.
+- This same reason we have to append this element to the `document.body`. Otherwise, event delegation wouldn't work either.
+- We configure the button to be cancelable, and also set the button to zero, which turns it into a left-click.
+- We need to configure the `clickEvent` so that it bubbles so that React can take advantage of its event delegation and make it cancelable because that's how the event is going to be by default when the user clicks on the button. Setting button to zero makes it a left-click.
+
+## 2/15/21
+
+- Update previously completed exercises that I didn't update on here.
+
+## Simple Test with React Testing Library
+
+### Intro
+
+- Kent created this library because he liked the way that teting is written where it's all implementation detail-free and it's focused on the users that are actually using our component, but didn't like the boilerplate.
+- `React Testing Library` gets rid of the unnecessary boilerplate, and adds some ability to query things in the way that the user looks around for things on our page as well.
+
+### Exercise 1: Rendering
+
+- With `React Testing Library`'s render, you can provide your own base elements if you want to, but the library will default to a new `div`.
+- The library keeps track of all the divs.
+  - It will keep track of all the divs that it's creating as well as removing the divs and finally unmounting the components that were rendered.
+- It cleans up for you automatically, [so no need to worry about the clean up](#clean-up).
+
+### Exercise 2: Firing Events
+
+### Extra Credit: Assertions
