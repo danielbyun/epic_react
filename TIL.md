@@ -5229,3 +5229,25 @@ expect(message).toHaveTextContent('Current count: 2');
         ```
 
     - Debugging
+
+      - You can debug what the screen exposes by using `screen.debug()`
+      - Basically a shortcut for `console.log(prettyDOM())`
+        - Supports debugging the document, a single element, or an array of elements
+      - Example:
+
+        ```jsx
+        import { screen } from '@testing-library/dom';
+
+        document.body.innerHTML = `
+        <button>test</button>
+        <span>multi-test</span>
+        <div>multi-test</div>
+        `;
+
+        // debug document
+        screen.debug();
+        // debug single element
+        screen.debug(screen.getByText('test'));
+        // debug multiple elements
+        screen.debug(screen.getAllByText('multi-test'));
+        ```
