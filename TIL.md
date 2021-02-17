@@ -4000,9 +4000,9 @@ export default App
 
 --
 
-## 1/7/21
+# Started 💯💯 Fix Perf Death by a Thousand Cuts 💯💯
 
-### Started 💯💯 Fix Perf Death by a Thousand Cuts 💯💯
+## 1/7/21
 
 ### Exercise (Colocate State):
 
@@ -4123,6 +4123,8 @@ export default App;
 Been updating `TIL.md` on here.
 
 Working on other aspects of my life - but the goal is to finish testing and suspense by the end of Feb
+
+# Started Testing React Apps
 
 ## 2/2/21
 
@@ -4774,7 +4776,7 @@ test('returns winner', () => {
 
 - Update previously completed exercises that I didn't update on here.
 
-## Started Simple Test with React Testing Library
+## Simple Test with React Testing Library
 
 ### Intro
 
@@ -4809,7 +4811,7 @@ test('returns winner', () => {
   expect(message.textContent).toBe('Current count: 0'); // passing
   ```
 
-- `fireEvent` cleans up bunch of boilerplate code by not using `MouseEvent` and also has a variety of actions you can call (pretty much every event that is available to the browser you have available in here to fire the different events that your components might be listening to).
+- `fireEvent` cleans up bunch of boilerplate code by not using `MouseEvent` and also has a variety of actions you can call (pretty much every event that is available to the browser you have available in here to ÷fire the different events that your components might be listening to).
 
 ### Extra Credit: Assertions
 
@@ -4832,4 +4834,398 @@ expect(message).toHaveTextContent('Current count: 2');
   > Received:
   > `Current count: 1`
 
-## Finished Simple Test with React Testing Library
+## Avoid Implementation Details
+
+- Impelentation Details:
+
+  - A term refering to how an abstraction accomplishes a certain outcome.
+  - Basically, something that the users do not care about.
+
+- Prerequisites
+
+  1. [`screen`](https://testing-library.com/docs/dom-testing-library/api-queries#screen)
+  2. [Testing Implementation Details](https://kentcdodds.com/blog/testing-implementation-details)
+  3. [the query docs](https://testing-library.com/docs/dom-testing-library/api-queries).
+
+  - `screen` notes
+
+    > All of the queries exported by DOM Testing Library accept a container as the first argument. Because querying the entire document.body is very common, DOM Testing Library also exports a screen object which has every query that is pre-bound to document.body (using the within functionality). Wrappers such as React Testing Library re-export screen so you can use it the same way.
+
+    - Example:
+
+    ```jsx
+    import { render, screen } from '@testing-library/react';
+    render(
+      <div>
+        <label htmlFor='example'>Example</label>
+        <input id='example' />
+      </div>
+    );
+    const exampleInput = screen.getByLabelText('Example');
+    ```
+
+  - Testing Implementation Details notes:
+
+    > Testing implementation details is a recipe for a disaster. Why is that? And what does it even mean?
+
+    - Why is testing implementation details bad?
+      1. Can break when you refactor application code. **False negatives**
+      2. MAy not fail when you break application code. **False positives**
+
+    > _To be clear, the test is: "does the software work". If the test passes, then that means the test came back "positive" (found working software). If it does not, that means the test comes back "negative" (did not find working software). The term "False" refers to when the test came back with an incorrect result, meaning the software is actually broken but the test passes (false positive) or the software is actually working but the test fails (false negative)._
+
+    - Example:
+
+      ```jsx
+      import * as React from 'react';
+      import AccordionContents from './accordion-contents';
+
+      class Accordion extends React.Component {
+        state = { openIndex: 0 };
+        setOpenIndex = (openIndex) => this.setState({ openIndex });
+        render() {
+          const { openIndex } = this.state;
+
+          return (
+            <div>
+              {this.props.items.map((item, index) => {
+                <>
+                  <button onClick={() => this.setOpenIndex(index)}>
+                    {item.title}
+                  </button>
+                  {index === openIndex ? (
+                    <AccordionContents>{item.contents}</AccordionContents>
+                  ) : null}
+                </>;
+              })}
+            </div>
+          );
+        }
+      }
+      ```
+
+    - Example that tests implementation details
+
+      ```jsx
+      // __tests__/accordion.enzyme.js
+      import * as React from 'react';
+      // if you're wondering why not shallow,
+      // then please read https://kcd.im/shallow
+      import Enzyme, { mount } from 'enzyme';
+      import EnzymeAdapter from 'enzyme-adapter-react-16';
+      import Accordion from '../accordion';
+
+      // Setup enzyme's react adapter
+      Enzyme.configure({ adapter: new EnzymeAdapter() });
+
+      test('setOpenIndex sets the open index state properly', () => {
+        const wrapper = mount(<Accordion items={[]} />);
+
+        expect(wrapper.state('openIndex')).toBe(0);
+        wrapper.instance().setOpenIndex(1);
+        expect(wrapper.state('openIndex')).toBe(1);
+      });
+
+      test('Accordion renders AccordionContents with the item contents', () => {
+        const hats = { title: 'Favorite Hats', contents: 'Fedoras are classy' };
+        const footware = {
+          title: 'Favorite Footware',
+          contents: 'Flipflops are the best',
+        };
+        const wrapper = mount(<Accordion items={[hats, footware]} />);
+        expect(wrapper.find('AccordionContents').props().children).toBe(
+          hats.contents
+        );
+      });
+      ```
+
+    - False negatives when refactoring
+
+      - Why do a lot of people think UI testing is distasteful?!
+        - A lot of complains are: "Every time I make a change to the code, the tests break!"
+      - Real-life example (scenario)
+
+        - Let's say I come in and I'm refactoring this accordion to prepare it to allow for multiple accordion items to be open at once. A refactor doesn't change existing behavior at all, it just changes the **implementation**. So let's change the **implementation** in a way that doesn't change the behavior.
+        - Let's say that we're working on adding the ability for multiple accordion elements to be opened at once, so we're changing our internal state from openIndex to `openIndexes`:
+
+        ```jsx
+        class Accordion extends React.Component {
+        - state = {openIndex: 0}
+        - setOpenIndex = openIndex => this.setState({openIndex})
+
+        * state = {openIndexes: [0]}
+        * setOpenIndex = openIndex => this.setState({openIndexes: [openIndex]})
+          render() {
+
+        - const {openIndex} = this.state
+        * const {openIndexes} = this.state
+
+        return (
+          <div>
+            {this.props.items.map((item, index) => (
+              <>
+                <button onClick={() => this.setOpenIndex(index)}>
+                  {item.title}
+                </button>
+
+        -            {index === openIndex ? (
+
+        *            {openIndexes.includes(index) ? (
+                        <AccordionContents>{item.contents}</AccordionContents>
+                      ) : null}
+                    </>
+                  ))}
+                </div>
+              )
+          }
+        }
+        ```
+
+        - error message
+
+        ```
+        expect(received).toBe(expected)
+        Expected value to be (using ===):
+          0
+        Received:
+        undefined
+        ```
+
+        > Test failing when the component works fine - false negative. Tests which test implementation details can give you a false negative when you refactor your code. This leads to brittle and frustrating tests that seem to break anytime you so much as look at the code.
+
+    - False positives
+      > false positive: we didn't get a test failure, but we should have! We need to add another test to verify clicking the button updates the state correctly. And then I need to add a coverage threshold of 100% code coverage so we don't make this mistake again.
+    - The best way to prevent all these is to write tests that are implementation detail free
+
+      - Example that solves all the issues above:
+
+        ```jsx
+        // __tests__/accordion.rtl.js
+        import '@testing-library/jest-dom/extend-expect';
+        import * as React from 'react';
+        import { render, screen } from '@testing-library/react';
+        import userEvent from '@testing-library/user-event';
+        import Accordion from '../accordion';
+
+        test('can open accordion items to see the contents', () => {
+          const hats = {
+            title: 'Favorite Hats',
+            contents: 'Fedoras are classy',
+          };
+          const footware = {
+            title: 'Favorite Footware',
+            contents: 'Flipflops are the best',
+          };
+          render(<Accordion items={[hats, footware]} />);
+
+          expect(screen.getByText(hats.contents)).toBeInTheDocument();
+          expect(screen.queryByText(footware.contents)).not.toBeInTheDocument();
+
+          userEvent.click(screen.getByText(footware.title));
+
+          expect(screen.getByText(footware.contents)).toBeInTheDocument();
+          expect(screen.queryByText(hats.contents)).not.toBeInTheDocument();
+        });
+        ```
+
+    - Implementation Detail:
+
+      > _Implementation details are things which users of your code will not typically use, see, or even know about._
+
+      - flow
+        1. Who is the user of this code?
+           a. end-users
+           b. developers
+           **End-users and developers are the two 'users' that our application code needs to consider.**
+
+    - Problem with hooks
+
+      - `Enzyme` has a lot of issues with hooks still.
+      - So use `React Testing Library`! lol
+
+    - Conclusion:
+      - How to avoid testing implementati on details
+        1. Use the right tool to start.
+        2. Follow this process.
+        - What part of your untested codebase would be really bad if it broke? (The checkout process)
+        - Try to narrow it down to a unit or a few units of code (When clicking the
+          'checkout' button a request with the cart items is sent to / checkout)
+        - Look at that code and consider who the 'users' are (The developer rendering the checkout form, the end user clicking on the button)
+        - Write down a list of instructions for that user to manually test that code to make sure it's not broken. (render the form with some fake data in the cart, click the checkout button, a fake successful response, make sure the success message is displayed).
+        - Turn that list of instructions into an automated test.
+
+  - the query docs notes
+
+    ### Queries are the method that `Testing Library` gives you to find elements on the page.
+
+    ***
+
+    - There are several types of queries
+      1. get
+      2. find
+      3. query
+    - The difference between them is whether the query will throw an error if no element is found or if it will return a Promise and retry.
+
+    ### After selecting an element, you can use the `Events API` or `user-event` to fire events and simulate user interactions with the page, or use Jest and `jest-dom` to make assertions about the element.
+
+    ### Action APIs like `waitFor` or `findBy` can be used to await the change in the DOM.
+
+    ***
+
+    - Example
+
+      ```jsx
+      import { screen } from '@testing-library/react';
+
+      test('should show login form', () => {
+        render(<Login />);
+        const input = screen.getByLabelText('Username');
+        // Events and assertions
+      });
+      ```
+
+    ### Types of queries
+
+    ***
+
+    - | Types of query        | 0 Matches     | 1 Match        | >1 Matches   | Retry (Async/Await) |
+      | --------------------- | ------------- | -------------- | ------------ | ------------------- |
+      | **Single Element**    | &#xfeff;      | &#xfeff;       | &#xfeff;     | &#xfeff;            |
+      | `getBy...`            | throw error   | return element | throw error  | no                  |
+      | `queryBy...`          | return `null` | return element | throw error  | no                  |
+      | `findBy...`           | throw error   | return element | throw error  | yes                 |
+      | **Multiple Elements** | &#xfeff;      | &#xfeff;       | &#xfeff;     | &#xfeff;            |
+      | `getAllBy...`         | throw         | return array   | return array | no                  |
+      | `queryAllBy...`       | return `[]`   | return array   | return array | no                  |
+      | `findAllBy...`        | throw         | return array   | return array | yes                 |
+
+    ### Priority
+
+    ***
+
+    1. **Queries Accessible to Everyone** queries that reflect the experience of visual / mouse users as well as those that use assistive technology
+       - `getByRole`: This can be used to query _every_ element that is exposed in the `accessibility tree`.
+         With the `name` option you can filter the returned elements by their `accessible name`. This should be your **top** preference for just about everything. There's not much you can't get with this (if you can't, it's possible your UI is inaccessible). Most often, this will be used with the `name` option like so: `getByRole('button', {name: /submit/i})`.
+       - `getByLabelText`: Only really good for _form fields_, but this is the number one method a user finds those elements, so it shoud be your **top** preference.
+       - `getByPlaceholderText`: **A placeholder is not a substitue for a label.** But if that's all you have, then it's better than alternatives.
+       - `getByText`: Not useful for forms, but this is the number 1 method a user finds most non-interactive elements (like divs and spans).
+       - `getByDisplayValue`: The current value of a form element can be useful when navigating a page with filled-in values.
+    2. **Semantic Queries** HTML5 and ARIA compliant selectors. Note that the user experience of interacting with these attributes varies greatly across browsers and assistive technology.
+       - `getByAltText`: If your element is one which supports `alt` text (`img`, `area`, and `input`), then you can use this to find that element.
+       - `getByTitle`: The title attribute is not consistently read by screenreaers, and is not visible by default for sighted users
+    3. Test IDs
+       - `getByTestId`: The user cannot see (or hear) these, so this is only recommended for cases where you can't match by role or text or it doesn't make sense (e.g. the text is dynamic).
+
+    ### Using Queries
+
+    ***
+
+    > The base queries from DOM Testing Library require you to pass a `container` as the first argument. Most framework-implementations of Testing Library provide a pre-bound version of these queries when you render your components with them which means you do not have to provide a container. In addition, if you just want to query `document.body` then you can use the `screen` export as demonstrated below (using `screen` is recommended).
+
+    - The primary argument to a query can be a _string_, _regular expression_, or _function_. There are also options to adjust how node text is pased.
+    - Example:
+
+      ```html
+      <body>
+        <div id="app">
+          <label for="username-input">Username</label>
+          <input id="username-input" />
+        </div>
+      </body>
+      ```
+
+      ```jsx
+      import { screen, getByLabelText } from '@testing-library/dom';
+
+      // With screen:
+      const inputNode1 = screen.getByLabelText('Username');
+
+      // Without screen, you need to provide a container:
+      const container = document.querySelector('#app');
+      const inputNode2 = getByLabelText(container, 'Username');
+      ```
+
+      #### `screen`
+
+      ***
+
+      > All of the queries exported by DOM Testing Library accept a `container` as the first argument. Because querying the entire `document.body` is very common, DOM Testing Library also exports a `screen` object which has every query that is pre-bound to `document.body` (using the `within` functionality). Wrappers such as React Testing Library re-export `screen` so you can use it the same way.
+
+    ### `TextMatch`
+
+    ***
+
+    > Most of the query APIs take a `TextMatch` as an argument, which means the argument can be either a _string_, _regex_, or a function which returns `true` for a match and `false` for a mismatch.
+
+    - Example:
+
+      ```html
+      <div>Hello World</div>
+      ```
+
+      - _will_ find the div:
+
+        ```jsx
+        // matching a string:
+        screen.getByText('Hello World'); // full string match
+        screen.getByText('llo Worl', { exact: false }); // substring match
+        screen.getByText('hello world', { exact: false }); // ignore case
+
+        // matching a regex:
+        screen.getByText(/World/); // substring match
+        screen.getByText(/world/i); // substring match, ignore case
+        screen.getByText(/^hello world$/i); // full string match, ignore case
+        screen.getByText(/Hello W?oRlD/i); // substring match, ignore case, searches for "hello world" or "hello orld"
+
+        // Matching with a custom function:
+        screen.getByText((content, element) => content.startsWith('Hello'));
+        ```
+
+      - _will_ not find the div:
+
+        ```jsx
+        // full string does not match
+        screen.getByText('Goodbye World');
+
+        // case-sensitive regex with different case
+        screen.getByText(/hello world/);
+
+        // function looking for a span when it's actually a div:
+        screen.getByText((content, element) => {
+          return (
+            element.tagName.toLowerCase() === 'span' &&
+            content.startsWith('Hello')
+          );
+        });
+        ```
+
+    - Precision
+      - Queries that take a `TextMatch` also accept an object as the final argument that can contain options that affect the precision of string matching:
+        1. `exact` has no effect on `regex` or `function` arguments.
+        2. In most cases using a regex instead of a string gives you more control over fuzzy matching and should be preferred over `{ exact: false }
+      - `normalizer`: An optional function which overrides normalization behavior.
+    - Normalization
+
+      - Before running any matching logic against text in the DOM, the `library` automatically normalizes the text.
+      - By default, normalization consists of
+        1. trimming whitespace from the start
+        2. trimming whitespace from the end of the text
+        3. collapsing multiple adjacent whitespace characters into a single space
+      - `getDefaultNormalizer`: takes an options object which allows the selection of behavior:
+        1. `trim`: Defaults to `true`. Trims leading and trailing whitespace
+        2. `collapseWhitespace`: Defaults to `true`. Collapses inner whitespace (newlines, tabs, repeated spaces) into a single space.
+      - example:
+
+        ```jsx
+        // to perform a match without trimming:
+        screen.getByText('text', {
+          normalizer: getDefaultNormalizer({ trim: false }),
+        });
+
+        // to override normalization to remove some Unicode characters whilst keeping some (but not all) of the built-in normalization behavior:
+        screen.getByText('text', {
+          normalizer: (str) => getDefaultNormalizer({ trim: false }),
+        });
+        ```
+
+    - Debugging
