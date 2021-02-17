@@ -4836,6 +4836,8 @@ expect(message).toHaveTextContent('Current count: 2');
 
 ## Avoid Implementation Details
 
+### Intro
+
 - Impelentation Details:
 
   - A term refering to how an abstraction accomplishes a certain outcome.
@@ -5056,7 +5058,7 @@ expect(message).toHaveTextContent('Current count: 2');
 
   - the query docs notes
 
-    ### Queries are the method that `Testing Library` gives you to find elements on the page.
+    #### Queries are the method that `Testing Library` gives you to find elements on the page.
 
     ***
 
@@ -5066,9 +5068,9 @@ expect(message).toHaveTextContent('Current count: 2');
       3. query
     - The difference between them is whether the query will throw an error if no element is found or if it will return a Promise and retry.
 
-    ### After selecting an element, you can use the `Events API` or `user-event` to fire events and simulate user interactions with the page, or use Jest and `jest-dom` to make assertions about the element.
+    #### After selecting an element, you can use the `Events API` or `user-event` to fire events and simulate user interactions with the page, or use Jest and `jest-dom` to make assertions about the element.
 
-    ### Action APIs like `waitFor` or `findBy` can be used to await the change in the DOM.
+    #### Action APIs like `waitFor` or `findBy` can be used to await the change in the DOM.
 
     ***
 
@@ -5084,7 +5086,7 @@ expect(message).toHaveTextContent('Current count: 2');
       });
       ```
 
-    ### Types of queries
+    #### Types of queries
 
     ***
 
@@ -5099,7 +5101,7 @@ expect(message).toHaveTextContent('Current count: 2');
       | `queryAllBy...`       | return `[]`   | return array   | return array | no                  |
       | `findAllBy...`        | throw         | return array   | return array | yes                 |
 
-    ### Priority
+    #### Priority
 
     ***
 
@@ -5116,7 +5118,7 @@ expect(message).toHaveTextContent('Current count: 2');
     3. Test IDs
        - `getByTestId`: The user cannot see (or hear) these, so this is only recommended for cases where you can't match by role or text or it doesn't make sense (e.g. the text is dynamic).
 
-    ### Using Queries
+    #### Using Queries
 
     ***
 
@@ -5145,13 +5147,13 @@ expect(message).toHaveTextContent('Current count: 2');
       const inputNode2 = getByLabelText(container, 'Username');
       ```
 
-      #### `screen`
+      ##### `screen`
 
       ***
 
       > All of the queries exported by DOM Testing Library accept a `container` as the first argument. Because querying the entire `document.body` is very common, DOM Testing Library also exports a `screen` object which has every query that is pre-bound to `document.body` (using the `within` functionality). Wrappers such as React Testing Library re-export `screen` so you can use it the same way.
 
-    ### `TextMatch`
+    #### `TextMatch`
 
     ***
 
@@ -5251,3 +5253,194 @@ expect(message).toHaveTextContent('Current count: 2');
         // debug multiple elements
         screen.debug(screen.getAllByText('multi-test'));
         ```
+
+### Exercise 1: Screen Utility
+
+- Your tests should be resilient to changes to the code base experiences over time.
+- We want to not only test the users, but we want to test the elements using the `Accessibility` tool to get grab what the screen readers see.
+
+  ```jsx
+  const decrement = screen.getByRole('button', { name: /decrement/i }); // ignore case
+  const increment = screen.getByRole('button', { name: /increment/i }); // ignore case
+
+  const message = screen.getByText(/current count/i);
+
+  expect(message).toHaveTextContent('Current count: 0');
+  fireEvent.click(increment);
+  expect(message).toHaveTextContent('Current count: 1');
+  fireEvent.click(decrement);
+  expect(message).toHaveTextContent('Current count: 0');
+  ```
+
+### Exercise 2: Browser Interactions
+
+- If the user uses `onMouseDown` and or `onMouseUp`, the component works fine but the test will fail.
+- To correct this issue, instead of only firing the click event with `fireEvent`, use `userEvent`
+
+  - userEvent fires a bunch of different events that is associated with the typical user event
+
+    ```jsx
+    const decrement = screen.getByRole('button', { name: /decrement/i }); // ignore case
+    const increment = screen.getByRole('button', { name: /increment/i }); // ignore case
+
+    const message = screen.getByText(/current count/i);
+
+    expect(message).toHaveTextContent('Current count: 0');
+    userEvent.click(increment);
+    expect(message).toHaveTextContent('Current count: 1');
+    userEvent.click(decrement);
+    expect(message).toHaveTextContent('Current count: 0');
+    ```
+
+## Form Testing
+
+### Exercise 1: Testing a Login Form
+
+- Created a function that assigns `submittedData` from the test to `mock` form submit
+  - Created a variable called `submittedData` to hold the values when testing form submit.
+- Grab the input fields by using `getByLabelText` and making sure that the cases are ignored to increase flexibility
+- Grab the button by using `getByRole` to allow `screen readers` to grab the same button with the name of `submit` with case ignored again.
+- Use `userEvent` to simulate typing and clicking.
+
+  ```jsx
+  test('submitting the form calls onSubmit with username and password', () => {
+    // 🐨 create a variable called "submittedData" and a handleSubmit function that
+    // accepts the data and assigns submittedData to the data that was submitted
+    // 💰 if you need a hand, here's what the handleSubmit function should do:
+    // const handleSubmit = data => (submittedData = data)
+    let submittedData = {};
+    const handleSubmit = (data) => (submittedData = data);
+
+    // 🐨 render the login with your handleSubmit function as the onSubmit prop
+    render(<Login onSubmit={handleSubmit} />);
+    // screen.debug()
+
+    // 🐨 get the username and password fields via `getByLabelText`
+    const username = 'doinglab';
+    const password = 'doing1011';
+
+    // 🐨 use userEvent.type to change the username and password fields to
+    //    whatever you want
+    userEvent.type(screen.getByLabelText(/username/i), username);
+    userEvent.type(screen.getByLabelText(/password/i), password);
+
+    // 🐨 click on the button with the text "Submit"
+    const submitButton = screen.getByRole('button', { name: /submit/i });
+    userEvent.click(submitButton);
+
+    // assert that submittedData is correct
+    // 💰 use `toEqual` from Jest: 📜 https://jestjs.io/docs/en/expect#toequalvalue
+    expect(submittedData).toEqual({ username, password });
+  });
+  ```
+
+### Extra Credit 1: Use a Jest Mock Function
+
+- Jest actually provides a `mock` function because testing functions like the `handleSubmit` are so common.
+
+  ```jsx
+  test('submitting the form calls onSubmit with username and password', () => {
+    const handleSubmit = jest.fn();
+
+    render(<Login onSubmit={handleSubmit} />);
+
+    const username = 'doinglab';
+    const password = 'doing1011';
+
+    userEvent.type(screen.getByLabelText(/username/i), username);
+    userEvent.type(screen.getByLabelText(/password/i), password);
+
+    const submitButton = screen.getByRole('button', { name: /submit/i });
+    userEvent.click(submitButton);
+
+    expect(handleSubmit).toHaveBeenCalledWith({ username, password });
+  });
+  ```
+
+### Extra Credit 2: Generate Test Data
+
+- instead of creating constants for `username` and `password` for every test, use a library like `faker` to generate so you don't have to spend unnecessary time worrying about minor stuff like that.
+
+  ```jsx
+  test('submitting the form calls onSubmit with username and password', () => {
+    const handleSubmit = jest.fn();
+
+    const buildLoginForm = () => {
+      return {
+        username: faker.internet.userName(),
+        password: faker.internet.password(),
+      };
+    };
+
+    const { username, password } = buildLoginForm();
+
+    render(<Login onSubmit={handleSubmit} />);
+
+    userEvent.type(screen.getByLabelText(/username/i), username);
+    userEvent.type(screen.getByLabelText(/password/i), password);
+
+    const submitButton = screen.getByRole('button', { name: /submit/i });
+    userEvent.click(submitButton);
+
+    expect(handleSubmit).toHaveBeenCalledWith({ username, password });
+  });
+  ```
+
+### Extra Credit 3: Allow for Overrides
+
+- unlike above, sometimes you do need the data to be specific for the test.
+- so when it needs to be specific, it's generally a good idea to allow for overrides.
+
+  ```jsx
+  test('submitting the form calls onSubmit with username and password', () => {
+    const handleSubmit = jest.fn();
+
+    const buildLoginForm = (overrides) => {
+      return {
+        username: faker.internet.userName(),
+        password: faker.internet.password(),
+        ...overrides,
+      };
+    };
+
+    const { username, password } = buildLoginForm({ password: 'doing1011' });
+
+    render(<Login onSubmit={handleSubmit} />);
+
+    userEvent.type(screen.getByLabelText(/username/i), username);
+    userEvent.type(screen.getByLabelText(/password/i), password);
+
+    const submitButton = screen.getByRole('button', { name: /submit/i });
+    userEvent.click(submitButton);
+
+    expect(handleSubmit).toHaveBeenCalledWith({ username, password });
+  });
+  ```
+
+### Extra Credit 4: use Test DataBot
+
+- When your object factories get really complicated, it's hard to manage them.
+- There is a module that helps with all the object fields, overrides, etc.
+- So let's migrate the `buildLoginForm` function to use this module to handle objects for the tests.
+
+  ```jsx
+  // the fake function gets called every time we want to build the objects, so the value will be different from other login form
+  const buildLoginForm = build({
+    fields: {
+      username: fake((f) => f.internet.userName()),
+      password: fake((f) => f.internet.password()),
+    },
+  });
+  ```
+
+## Mocking HTTP Requests
+
+## Mocking Browser APIs and Modules
+
+## Context and Custom Render Method
+
+## Testing Custom Hooks
+
+## Testing React Apps Outro
+
+# Finished Testing React Apps
