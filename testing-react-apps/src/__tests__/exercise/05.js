@@ -7,9 +7,11 @@ import {render, screen, waitForElementToBeRemoved} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import {build, fake} from '@jackfranklin/test-data-bot'
 // 🐨 you'll need to import rest from 'msw' and setupServer from msw/node
-import rest from 'msw'
-import setupServer from 'msw/node'
+import {rest} from 'msw'
+import {setupServer} from 'msw/node'
 import Login from '../../components/login-submission'
+
+import {handlers} from 'test/server-handlers'
 
 const buildLoginForm = build({
   fields: {
@@ -19,21 +21,24 @@ const buildLoginForm = build({
 })
 
 // 🐨 get the server setup with an async function to handle the login POST request:
-const server = setupServer(
-  // 💰 here's something to get you started
-  rest.post(
-    'https://auth-provider.example.com/api/login',
-    async (req, res, ctx) => {
-      // you'll want to respond with an JSON object that has the username.
-      // 📜 https://mswjs.io/
-    },
-  ),
-)
+// const server = setupServer(
+//   // 💰 here's something to get you started
+//   rest.post(
+//     'https://auth-provider.example.com/api/login',
+//     async (req, res, ctx) => {
+//       // you'll want to respond with an JSON object that has the username.
+//       // 📜 https://mswjs.io/
+//       return res(ctx.json({username: req.body.username}))
+//     },
+//   ),
+// )
+const server = setupServer(...handlers)
 
 // 🐨 before all the tests, start the server with `server.listen()`
 beforeAll(() => server.listen())
 // 🐨 after all the tests, stop the server with `server.close()`
 afterAll(() => server.close())
+afterEach(() => server.resetHandlers())
 
 test(`logging in displays the user's username`, async () => {
   render(<Login />)
@@ -48,10 +53,52 @@ test(`logging in displays the user's username`, async () => {
   // spinner has an aria-label of "loading" for accessibility purposes, so
   // 🐨 wait for the loading spinner to be removed using waitForElementToBeRemoved
   // 📜 https://testing-library.com/docs/dom-testing-library/api-async#waitforelementtoberemoved
-  await waitForElementToBeRemoved(() => screen.getByText('loading'))
+  await waitForElementToBeRemoved(() => screen.getByLabelText(/loading/i))
 
   // once the login is successful, then the loading spinner disappears and
   // we render the username.
   // 🐨 assert that the username is on the screen
-  expect(screen.getByText(username))
+  expect(screen.getByText(username)).toBeInTheDocument()
+})
+
+// testing unhappy path
+test('omitting the password results in an error', async () => {
+  render(<Login />)
+
+  const {username} = buildLoginForm()
+
+  userEvent.type(screen.getByLabelText(/username/i), username)
+  // no password
+
+  userEvent.click(screen.getByRole('button', {name: /submit/i}))
+  await waitForElementToBeRemoved(() => screen.getByLabelText(/loading/i))
+
+  // expect(screen.getByRole('alert')).toHaveTextContent('password required')
+
+  // use inline snapshots
+  expect(screen.getByRole('alert').textContent).toMatchInlineSnapshot(
+    `"password required"`,
+  )
+})
+
+// one-off server handlers
+test('unknown server error displays the error message', async () => {
+  const errorMessage = 'something is wrong'
+
+  server.use(
+    rest.post(
+      'https://auth-provider.example.com/api/login',
+      async (req, res, ctx) => {
+        return res(ctx.status(500), ctx.json({message: errorMessage}))
+      },
+    ),
+  )
+
+  render(<Login />)
+  userEvent.click(screen.getByRole('button', {name: /submit/i}))
+
+  await waitForElementToBeRemoved(() => screen.getByLabelText(/loading/i))
+
+  // use inline snapshots
+  expect(screen.getByRole('alert')).toHaveTextContent(errorMessage)
 })

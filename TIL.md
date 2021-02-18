@@ -5442,19 +5442,220 @@ expect(message).toHaveTextContent('Current count: 2');
 
 ### Exercise 1: Mock Service Worker
 
+- we use `{rest}` and `{setupServer} from the `msw` module
+- we setup server and the route its going to use, and for this exercise it was a post for a login
+  ```jsx
+  const server = setupServer(
+    rest.post(endpoint, async (req, res, ctx) => {
+      // we tell `setupServer` what to expect
+      // we convert the context to json bcause we're using `fetch`
+      return res(ctx.json({ username: req.body.username }));
+    })
+  );
+  ```
+- we need to listen to the server before all the tests, and close the server after all tests
+  ```jsx
+  beforeAll(() => server.listen());
+  afterAll(() => server.close());
+  ```
+- we wait for the spinner (loading) to go away to see if the test passes, in order to do that we need to use `waitForElementToBeRemoved` from `@testing-library/react`
+  ```jsx
+  await waitForElementToBeRemoved(() => screen.getByLabelText(/loading/i));
+  ```
+- assertion
+
+  ```jsx
+  expect(screen.getByText(username)).toBeInTheDocument();
+  ```
+
+- final code
+
+  ```jsx
+  import * as React from 'react';
+  import {
+    render,
+    screen,
+    waitForElementToBeRemoved,
+  } from '@testing-library/react';
+  import userEvent from '@testing-library/user-event';
+  import { build, fake } from '@jackfranklin/test-data-bot';
+
+  import { rest } from 'msw';
+  import { setupServer } from 'msw/node';
+  import Login from '../../components/login-submission';
+
+  const buildLoginForm = build({
+    fields: {
+      username: fake((f) => f.internet.userName()),
+      password: fake((f) => f.internet.password()),
+    },
+  });
+
+  const server = setupServer(
+    rest.post(
+      'https://auth-provider.example.com/api/login',
+      async (req, res, ctx) => {
+        return res(ctx.json({ username: req.body.username }));
+      }
+    )
+  );
+
+  beforeAll(() => server.listen());
+  afterAll(() => server.close());
+
+  test(`logging in displays the user's username`, async () => {
+    render(<Login />);
+    const { username, password } = buildLoginForm();
+
+    userEvent.type(screen.getByLabelText(/username/i), username);
+    userEvent.type(screen.getByLabelText(/password/i), password);
+
+    userEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+    await waitForElementToBeRemoved(() => screen.getByLabelText(/loading/i));
+
+    expect(screen.getByText(username)).toBeInTheDocument();
+  });
+  ```
+
 ### Exercise 2: Mocked Responses
+
+- It's really important that you simulate the exact behavior of your backend with the server handlers.
+- So you make it as ROBUST as possible.
+- One thing that the backend does is to send a 400 response if a required username or password is not provided.
+
+### server handler
+
+```jsx
+const server = setupServer(
+  rest.post(
+    'https://auth-provider.example.com/api/login',
+    async (req, res, ctx) => {
+      if (!req.body.password) {
+        return res(ctx.status(400), ctx.json({ message: 'password required' }));
+      }
+      if (!req.body.username) {
+        return res(ctx.status(400), ctx.json({ message: 'username required' }));
+      }
+      return res(ctx.json({ username: req.body.username }));
+    }
+  )
+);
+```
+
+- this mock resembles the backend more closely = more confidence
 
 ### Extra Credit 1: Reuse Server Request
 
+- we can use [server handlers](#server-handler) in both the development environment in the browser, as well as the test environment in node.
+- So we can import the handlers from `server-handlers.js`
+
+  ```jsx
+  import { handlers } from 'test/server-handlers';
+
+  const server = setupServer(...handlers);
+
+  // passes as usual
+  ```
+
 ### Extra Credit 2: Unhappy Path
+
+- we want to test when the user provides a username but not a password
+- because we have the server handlers setup, we don't need to do any extra configuration steps in order to do this.
+  - when the password is not supplied, the server-handler provides an error message that we can use for our test
+- We just give the login form with username only and we assert that the error message of `password required` will be shown on the ui.
+
+```jsx
+test('omitting the password results in an error', async () => {
+  render(<Login />);
+
+  const { username } = buildLoginForm();
+
+  userEvent.type(screen.getByLabelText(/username/i), username);
+  // no password
+
+  userEvent.click(screen.getByRole('button', { name: /submit/i }));
+  await waitForElementToBeRemoved(() => screen.getByLabelText(/loading/i));
+
+  screen.debug();
+
+  expect(screen.getByRole('alert')).toHaveTextContent('password required');
+});
+```
 
 ### Extra Credit 3: Use Inline Snapshots
 
-### Exxtra Credit 4: Use One-Off Server Handlers
+- holy hell SUUUPER cool
+- you can use inline snapshots to match whatever the component is rendering.
+- In our case, we just want the textContent so we create / update snapshot to only match the text content.
+  ```jsx
+  expect(screen.getByRole('alert').textContent).toMatchInlineSnapshot(
+    `"password required"`
+  );
+  ```
+
+### Extra Credit 4: Use One-Off Server Handlers
+
+- variables always preferred over inline snapshots
+- add an `afterEach` to reset all the handlers, so that all the handlers are specific and colocated to a test.
+- add a runtime handler to override the login API request
+- assign the error message to a variable so that we don't base it off of snapshot.
+- we wait for the loading to happen after we click the button, and expect the alert to have the same error message that came back from the API response.
+
+  ```jsx
+  test('omitting the password results in an error', async () => {
+    render(<Login />);
+
+    const { username } = buildLoginForm();
+
+    userEvent.type(screen.getByLabelText(/username/i), username);
+    // no password
+
+    userEvent.click(screen.getByRole('button', { name: /submit/i }));
+    await waitForElementToBeRemoved(() => screen.getByLabelText(/loading/i));
+
+    // expect(screen.getByRole('alert')).toHaveTextContent('password required')
+
+    // use inline snapshots
+    expect(screen.getByRole('alert').textContent).toMatchInlineSnapshot(
+      `"password required"`
+    );
+  });
+
+  // one-off server handlers
+  test('unknown server error displays the error message', async () => {
+    const errorMessage = 'something is wrong';
+
+    server.use(
+      rest.post(
+        'https://auth-provider.example.com/api/login',
+        async (req, res, ctx) => {
+          return res(ctx.status(500), ctx.json({ message: errorMessage }));
+        }
+      )
+    );
+
+    render(<Login />);
+    userEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+    await waitForElementToBeRemoved(() => screen.getByLabelText(/loading/i));
+
+    expect(screen.getByRole('alert')).toHaveTextContent(errorMessage);
+  });
+  ```
 
 ## Mocking Browser APIs and Modules
 
 ### Intro
+
+- Sometimes you have code that you don't want to have run, or maybe you have code that won't run in the specific environment that you're testing in.
+- we're currently running a simulated browser in `Node` using a module called `jsdom`. Sometimes you just have to fake out things that can't be done even with `jsdom`.
+  - `matchMedia`
+    - supported on Windows, not supported in `jsdom`
+    - need to include a polyfill
+    - monkey-patch-resize on Windows to test things out that rely on `matchMedia`.
+- Another reason to mock things out
+  - if a module is doing something that you don't want it to do for your test
 
 ### Exercise 1: Mock Geolocation
 
