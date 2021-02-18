@@ -5435,12 +5435,55 @@ expect(message).toHaveTextContent('Current count: 2');
 
 ## Mocking HTTP Requests
 
+### Intro
+
+- Most web applications need to interact with some back-end to be at all useful. It's going to do that using HTTP requests.
+- You want to mock those out because the unit and integration tests aren't the place to be making those actual requests. You'll be doing that in your end-to-end tests.
+
+### Exercise 1: Mock Service Worker
+
+### Exercise 2: Mocked Responses
+
+### Extra Credit 1: Reuse Server Request
+
+### Extra Credit 2: Unhappy Path
+
+### Extra Credit 3: Use Inline Snapshots
+
+### Exxtra Credit 4: Use One-Off Server Handlers
+
 ## Mocking Browser APIs and Modules
+
+### Intro
+
+### Exercise 1: Mock Geolocation
+
+### Exercise 2: Act Function
+
+### Extra Credit 1: Mock the module
 
 ## Context and Custom Render Method
 
+### Intro
+
+### Exercise 1: Wrapper Component
+
+### Extra Credit 1: Dark Theme
+
+### Extra Credit 2: Render Method
+
+### Extra Credit 3: App Test Utils
+
 ## Testing Custom Hooks
 
-## Testing React Apps Outro
+### Intro
+
+### Exercise 1: Test Functionality of Custom Hook
+
+### Extra Credit 1: Fake Component
+
+### Extra Credit 2: Setup Function
+
+### Extra Credit 3: Using React-Hooks Testing Library
 
 # Finished Testing React Apps
