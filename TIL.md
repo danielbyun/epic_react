@@ -5657,11 +5657,233 @@ test('omitting the password results in an error', async () => {
 - Another reason to mock things out
   - if a module is doing something that you don't want it to do for your test
 
+#### prerequisite readings
+
+1. [The Merits of Mocking](https://kentcdodds.com/blog/the-merits-of-mocking)
+
+   - > the more your tests resemble the way your software is used, the more confidence they can give you. -Kent C. Dodds
+   - > One of the biggest challenges people face with testing is knowing what to test. there are lots of reasons for that, but one big, flashing-lights reason is mocking. Many people don't know when to add a mock version of code or have their test run the actual code directly.
+
+   1. Mocking lets you fake it so you _can_ make it
+      - a good example would be testing out the checkout process without having to actually use the credit card
+   2. Mocking servers the real-world connection between what you're testing and what you're mocking
+      - Even if we have a perfectly passing test, this still doesn't guarantee when in production.
+   3. When you mock something, you're making a trade-off.
+      - You're trading confidence for something else. The test would be messy without mocking for example, the credit card process.
+   4. In my UI unit and integration tests, I have a rule.
+      - Never make actual network calls - mock the server response by mocking the module responsible for making the network calls.
+      - Also mock animation libraries to avoid waiting for animations before elements are removed from the page.
+      - For E2E tests, avoid mocking anything (with the exception of the backend hitting fake or test services and not actual credit card services, for exxample)
+   5. Saving a few milliseconds per test?
+      - NOT a good reason to mock.
+      - Picking shallow rendering because it's faster by a couple milliseconds is not a good tradeoff.
+      - The less you mock, the fewer tests you need, and trading confidence for a minute or two faster test suite is a BAD trade.
+   6. There's a time and a place for mocking.
+
+      - When you NEED to mock, Jest makes it easy with some mocking utilities.
+      - For example:
+
+        ```jsx
+          function (fn(impl = () => {}) {
+            const mockFn = (...args) => {
+              mockFn.mock.calls.push(args)
+              return impl(...args)
+            }
+
+            mockFn.mock = {calls: []}
+            return mockFn
+          }
+
+          const utilsPath = require.resolve('../utils')
+          require.cache[utilsPath] = {
+            id: utilsPath,
+            filename: utilsPath,
+            loaded: true,
+            exports: {
+              getWinner: fn((p1, p2) => p1)
+            }
+          }
+        ```
+
 ### Exercise 1: Mock Geolocation
+
+- steps
+
+  1. render the component
+  2. we'll get a loading state
+     - create an assertion
+     ```jsx
+     expect(screen.getByLabelText(/loading/i)).toBeInTheDocument();
+     ```
+  3. mock the function that the library uses
+
+     - in our case `getCurrentPosition()`
+     - Then we can call `mockImplemntation()`
+
+     ```jsx
+     beforeAll(() => {
+       window.navigator.geolocation = {
+         getCurrentPosition: jest.fn(),
+       };
+     });
+
+     // test code...
+     const fakePosition = {
+       coords: {
+         latitude: 35,
+         longitude: 139,
+       },
+     };
+
+     window.navigator.geolocation.getCurrentPosition.mockImplementation(
+       (callback) => {
+         promise.then(() => callback(fakePosition));
+       }
+     );
+     ```
+
+  4. using the `deferred` utils Kent gave us, we can run the callback function and implicitly resolve and wait for promise before inserting more assertions
+
+  - full test code
+
+    ```jsx
+    import * as React from 'react';
+    import { render, screen, act } from '@testing-library/react';
+    import Location from '../../examples/location';
+
+    beforeAll(() => {
+      window.navigator.geolocation = {
+        getCurrentPosition: jest.fn(), // mock it with jest function
+      };
+    });
+
+    function deferred() {
+      let resolve, reject;
+      const promise = new Promise((res, rej) => {
+        resolve = res;
+        reject = rej;
+      });
+      return { promise, resolve, reject };
+    }
+
+    test('displays the users current location', async () => {
+      const fakePosition = {
+        coords: {
+          latitude: 35,
+          longitude: 139,
+        },
+      };
+
+      const { promise, resolve } = deferred();
+
+      // we call this because we mocked the function
+      window.navigator.geolocation.getCurrentPosition.mockImplementation(
+        (callback) => {
+          promise.then(() => callback(fakePosition));
+        }
+      );
+
+      render(<Location />);
+      expect(screen.getByLabelText(/loading/i)).toBeInTheDocument();
+
+      resolve();
+      await promise;
+
+      expect(screen.queryByLabelText(/loading/i)).not.toBeInTheDocument();
+      expect(screen.getByText(/latitude/i)).toHaveTextContent(
+        `Latitude: ${fakePosition.coords.latitude}`
+      );
+      expect(screen.getByText(/longitude/i)).toHaveTextContent(
+        `Longitude: ${fakePosition.coords.longitude}`
+      );
+
+      screen.debug();
+    });
+    ```
 
 ### Exercise 2: Act Function
 
+- the test above gives an error stating `An update to Location inside a test was not wrapped in act(...)`
+- What's happening
+  - When the callback is called, it also calls a state update function within a third-party component that triggers an update to the state. (Which react wasn't expecting)
+  - We also need to make sure that all of the side effects that are triggered as a result of that state update are flushed before we continue on with our test BECAUSE:
+    - there could be a slight period of time when the DOM is updated, and our side effects are all run that is imperceptible to the user, but is perceptible to the tests
+- We want to make sure we only test the things that the user sees and interacts with.
+- Act flushes all the side effects after the callback is run.
+  ```jsx
+    // ... same code as above
+    await act(sync () => {
+      resolve()
+      await promise
+    })
+  ```
+
 ### Extra Credit 1: Mock the module
+
+- We can also just mock the third-party module that's interacting with geolocation
+- in our case, we use `useCurrentPosition` imported from `react-use-geolocation`
+- we can implement our own `useCurrentPosition` using `jest`
+  ```jsx
+  // jest looks through all exports and when it finds the function it will mock it automatically for us
+  jest.mock('react-use-geolocation');
+  ```
+- mock the `useCurrentPosition` hook.
+  - we bring in the `useCurrentPosition` function so that `Jest` can mock the function.
+  - then call `mockImplementation()` and then provide our own hook
+  - our own `use current position` mock
+    ```jsx
+    let setReturnValue;
+    const useMockCurrentPosition = () => {
+      const state = React.useState([]);
+      setReturnedValue = state[1];
+      return state[0];
+    };
+    ```
+- We need to wrap the state updater function with `act` to make sure that React flushes all of the side effects
+
+  - final code
+
+    ```jsx
+    import * as React from 'react';
+    import { render, screen, act } from '@testing-library/react';
+    import Location from '../../examples/location';
+    import { useCurrentPosition } from 'react-use-geolocation';
+
+    jest.mock('react-use-geolocation');
+
+    test('displays the users current location', async () => {
+      const fakePosition = {
+        coords: {
+          latitude: 35,
+          longitude: 139,
+        },
+      };
+
+      let setReturnValue;
+      const useMockCurrentPosition = () => {
+        const state = React.useState([]);
+        setReturnValue = state[1];
+        return state[0];
+      };
+
+      useCurrentPosition.mockImplementation(useMockCurrentPosition);
+
+      render(<Location />);
+      expect(screen.getByLabelText(/loading/i)).toBeInTheDocument();
+
+      act(() => {
+        setReturnValue([fakePosition]);
+      });
+
+      expect(screen.queryByLabelText(/loading/i)).not.toBeInTheDocument();
+      expect(screen.getByText(/latitude/i)).toHaveTextContent(
+        `Latitude: ${fakePosition.coords.latitude}`
+      );
+      expect(screen.getByText(/longitude/i)).toHaveTextContent(
+        `Longitude: ${fakePosition.coords.longitude}`
+      );
+    });
+    ```
 
 ## Context and Custom Render Method
 
