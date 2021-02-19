@@ -5889,19 +5889,199 @@ test('omitting the password results in an error', async () => {
 
 ### Intro
 
+- how to deal with components that consume context and how we can test those components that are consuming that context.
+- prerequisites
+
+  - [wrapper reading](https://testing-library.com/docs/react-testing-library/api#wrapper)
+
+    - notes
+
+      - You pass a react component as the `wrapper` option to have it rendered around the inner element
+      - Most useful when creating reusable custom render functions for common data providers
+      - to better test the component that's doing the prop updating to ensure the props are being correctly.
+
+      ```jsx
+      import { render } from '@testing-library/react';
+
+      const { rerender } = render(<NumberDisplay number={1} />);
+
+      // re-render the same component with different props
+      rerender(<NumberDisplay number={2} />);
+      ```
+
+  - [rerender reading](https://testing-library.com/docs/react-testing-library/setup)
+
+    - notes
+
+      - It's often useful to define a custom render method that includes things like global context providers, data stores, etc.
+      - To make this available globally, one approach is to define a utility file that re-exports everything from `React Testing Library`.
+
+      ```jsx
+      import React from 'react';
+      import { render } from '@testing-library/react';
+      import { ThemeProvider } from 'my-ui-lib';
+      import { TranslationProvider } from 'my-i18n-lib';
+      import defaultStrings from 'i18n/en-x-default';
+
+      const AllTheProviders = ({ children }) => {
+        return (
+          <ThemeProvider theme='light'>
+            <TranslationProvider messages={defaultStrings}>
+              {children}
+            </TranslationProvider>
+          </ThemeProvider>
+        );
+      };
+
+      const customRender = (ui, options) =>
+        render(ui, { wrapper: AllTheProviders, ...options });
+
+      // re-export everything
+      export * from '@testing-library/react';
+
+      // override render method
+      export { customRender as render };
+      ```
+
 ### Exercise 1: Wrapper Component
+
+- If your component is wrapped inside a Context, you need to include that when rendering
+  ```jsx
+  render(
+    <ThemeProvider>
+      <EasyButton>Easy</EasyButton>
+    </ThemeProvider>
+  );
+  ```
+- But instead of wrapping that we can use a `wrapper` function to achieve the same thing
+
+  ```jsx
+  const Wrapper = ({ children }) => (
+    <ThemeProvider initialTheme='light'>{children}</ThemeProvider>
+  );
+
+  render(<EasyButton>Easy</EasyButton>, { wrapper: Wrapper });
+
+  const Button = screen.getByRole('button', { name: /easy/i });
+  expect(button).toHaveStyle(`background-color: white; color: black;`);
+  ```
 
 ### Extra Credit 1: Dark Theme
 
+- Same thing except swap the `white` and `black`
+  ```jsx
+  test('renders with the dark styles for the dark theme', () => {
+    const Wrapper = ({ children }) => (
+      <ThemeProvider initialTheme='dark'>{children}</ThemeProvider>
+    );
+    // 🐨 uncomment all of this code and your test will be busted on the next line:
+    render(<EasyButton>Easy</EasyButton>, { wrapper: Wrapper });
+    const button = screen.getByRole('button', { name: /easy/i });
+    expect(button).toHaveStyle(`
+    background-color: black;
+    color: white;
+  `);
+  });
+  ```
+
 ### Extra Credit 2: Render Method
 
+- Get rid of the duplicate and create a special function called `renderWithTheme` and encapsulate the duplication
+
+  - We take some duplication, put it into a function, then genericize it so that it could be used as a function that we could call anytime we want to render something with the `ThemeProvider`
+
+  ```jsx
+  const renderWithTheme = (ui, { theme = 'light', ...options } = {}) => {
+    const Wrapper = ({ children }) => (
+      <ThemeProvider initialTheme={theme}>{children}</ThemeProvider>
+    );
+    return render(ui, { wrapper: Wrapper, ...options });
+  };
+  ```
+
+- final test code
+
+  ```jsx
+  import * as React from 'react';
+  import { render, screen } from '@testing-library/react';
+  import { ThemeProvider } from '../../components/theme';
+  import EasyButton from '../../components/easy-button';
+
+  // basically like render but has more options and ability to configure default wrapper
+  const renderWithTheme = (ui, { theme = 'light', ...options } = {}) => {
+    const Wrapper = ({ children }) => (
+      <ThemeProvider initialTheme={theme}>{children}</ThemeProvider>
+    );
+    return render(ui, { wrapper: Wrapper, ...options });
+  };
+
+  test('renders with the light styles for the light theme', () => {
+    renderWithTheme(<EasyButton>Easy</EasyButton>);
+    const button = screen.getByRole('button', { name: /easy/i });
+    expect(button).toHaveStyle(`
+      background-color: white;
+      color: black;
+    `);
+  });
+
+  /* eslint no-unused-vars:0 */
+
+  test('renders with the dark styles for the dark theme', () => {
+    renderWithTheme(<EasyButton>Easy</EasyButton>, { theme: 'dark' });
+    const button = screen.getByRole('button', { name: /easy/i });
+    expect(button).toHaveStyle(`
+      background-color: black;
+      color: white;
+    `);
+  });
+  ```
+
 ### Extra Credit 3: App Test Utils
+
+- Swap the `@testing-library/react` with our own `app-test-utils`.
+- Kent suggests that your tests should not be importing `@testing-library/react`.
+- Make a module that imports `render` from `React Testing Library`'s `render`. Then create your own render and re-export everything from `React Testing Library` - which then can be kind of your own version of `React Testing Library`
+  - It overrides the export for `render`, so that when you import `render`, you're importing this render function, which does call the `React Testing Library` render but it also provides a wrapper so that all of your context providers will be accessible to any component that you render with this function
+- Also, if you configure jest config correctly you can have jest figure out that all the files are coming from the `src` directory you don't need to use backticks to find the directory, etc.
+- final test code:
+
+  ```jsx
+  import * as React from 'react';
+  import { render, screen } from 'test/test-utils';
+  import EasyButton from 'components/easy-button';
+
+  test('renders with the light styles for the light theme', () => {
+    render(<EasyButton>Easy</EasyButton>);
+    const button = screen.getByRole('button', { name: /easy/i });
+    expect(button).toHaveStyle(`
+      background-color: white;
+      color: black;
+    `);
+  });
+
+  /* eslint no-unused-vars:0 */
+
+  test('renders with the dark styles for the dark theme', () => {
+    render(<EasyButton>Easy</EasyButton>, { theme: 'dark' });
+    const button = screen.getByRole('button', { name: /easy/i });
+    expect(button).toHaveStyle(`
+      background-color: black;
+      color: white;
+    `);
+  });
+  ```
 
 ## Testing Custom Hooks
 
 ### Intro
 
+- Testing custom hooks is something you probably shouldn't do.
+- Because your custom hooks will most likely be used by one, maybe two components, you should just test those components which then your hook is going to be tested as an implementation detail of those things.
+
 ### Exercise 1: Test Functionality of Custom Hook
+
+- since your custom hooks are used in a component, that's exactly how it should be tested.
+- The easiest and the most straightforward way to test a custom hook is to create a component that uses it and then test that component instead.
 
 ### Extra Credit 1: Fake Component
 
