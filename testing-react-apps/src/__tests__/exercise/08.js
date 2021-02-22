@@ -65,4 +65,23 @@ test('exposes the count and increment/decrement function (hooks)', () => {
   expect(result.count).toBe(0)
 })
 
+test('allows customization of the initial count', () => {
+  let result
+  const TestComponent = () => {
+    result = useCounter({initialCount: 3})
+    return null
+  }
+  render(<TestComponent />)
+  console.log(result)
+  expect(result.count).toBe(3)
+
+  act(() => result.increment())
+  expect(result.count).toBe(4)
+
+  act(() => result.decrement())
+  expect(result.count).toBe(3)
+})
+
+test('allows customization of the step', () => {})
+
 /* eslint no-unused-vars:0 */
