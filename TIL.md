@@ -6085,6 +6085,60 @@ test('omitting the password results in an error', async () => {
 
 ### Extra Credit 1: Fake Component
 
+### 2/22/21
+
+- Instead of re-creating the component that uses custom hooks to test (because things can get messy real quick), we can make a function test component
+  ```jsx
+  let result;
+  const TestComponent = () => {
+    result = useCounter(); // custom hook
+    return null; // need to return to make it a valid component
+  };
+  ```
+- because it returns `null` aka nothing, we can't get anything from the screen but we do have access to all the methods and the state in the result object.
+- test
+
+  ```jsx
+  let result;
+  const TestComponent = () => {
+    result = useCounter();
+    return null;
+  };
+  render(<TestComponent />);
+  console.log(result);
+  expect(result.count).toBe(0);
+
+  result.increment();
+  expect(result.count).toBe(1);
+
+  result.decrement();
+  expect(result.count).toBe(0);
+  ```
+
+  - the test will pass but the code `result.increment()` and `result.decrement()` will issue an error sayinig that these need to be wrapped in `act` because of the cleanup.
+  - We didn't need this previously because `userEvent` automatically wraps it in `act` but since we're calling this ourselves we need to wrap it to cleanp properly after the state updates.
+
+- final test
+
+  ```jsx
+  test('exposes the count and increment/decrement function (hooks)', () => {
+    let result;
+    const TestComponent = () => {
+      result = useCounter();
+      return null;
+    };
+    render(<TestComponent />);
+    console.log(result);
+    expect(result.count).toBe(0);
+
+    act(() => result.increment());
+    expect(result.count).toBe(1);
+
+    act(() => result.decrement());
+    expect(result.count).toBe(0);
+  });
+  ```
+
 ### Extra Credit 2: Setup Function
 
 ### Extra Credit 3: Using React-Hooks Testing Library
