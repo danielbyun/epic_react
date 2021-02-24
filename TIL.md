@@ -6250,45 +6250,112 @@ test('omitting the password results in an error', async () => {
         return result;
       };
       ```
+
     - then update the rest of the test
+
       ```jsx
-        test('exposes the count and increment/decrement function (hooks)', () => {
-        const result = setup()
+      test('exposes the count and increment/decrement function (hooks)', () => {
+        const result = setup();
 
-        expect(result.current.count).toBe(0)
+        expect(result.current.count).toBe(0);
 
-        act(() => result.current.increment())
-        expect(result.current.count).toBe(1)
+        act(() => result.current.increment());
+        expect(result.current.count).toBe(1);
 
-        act(() => result.current.decrement())
-        expect(result.current.count).toBe(0)
-      })
+        act(() => result.current.decrement());
+        expect(result.current.count).toBe(0);
+      });
 
       test('allows customization of the initial count', () => {
-        const result = setup({initialProps: {initialCount: 3}})
+        const result = setup({ initialProps: { initialCount: 3 } });
 
-        expect(result.current.count).toBe(3)
+        expect(result.current.count).toBe(3);
 
-        act(() => result.current.increment())
-        expect(result.current.count).toBe(4)
+        act(() => result.current.increment());
+        expect(result.current.count).toBe(4);
 
-        act(() => result.current.decrement())
-        expect(result.current.count).toBe(3)
-      })
+        act(() => result.current.decrement());
+        expect(result.current.count).toBe(3);
+      });
 
       test('allows customization of the step', () => {
-        const result = setup({initialProps: {step: 2}})
+        const result = setup({ initialProps: { step: 2 } });
 
-        expect(result.current.count).toBe(0)
+        expect(result.current.count).toBe(0);
 
-        act(() => result.current.increment())
-        expect(result.current.count).toBe(2)
+        act(() => result.current.increment());
+        expect(result.current.count).toBe(2);
 
-        act(() => result.current.decrement())
-        expect(result.current.count).toBe(0)
-      })
+        act(() => result.current.decrement());
+        expect(result.current.count).toBe(0);
+      });
       ```
 
 ### Extra Credit 3: Using React-Hooks Testing Library
+
+- get rid of the BOILERPLATE by using `renderHooks`
+- If we use `renderHooks` from `@testing-library/react-hooks`, we don't need to write a separate `setup` function
+
+  ```jsx
+  test('exposes the count and increment/decrement function (hooks)', () => {
+    const { result } = renderHook(useCounter);
+
+    expect(result.current.count).toBe(0);
+
+    actHook(() => result.current.increment());
+    expect(result.current.count).toBe(1);
+
+    actHook(() => result.current.decrement());
+    expect(result.current.count).toBe(0);
+  });
+
+  test('allows customization of the initial count', () => {
+    const { result } = renderHook(useCounter, {
+      initialProps: { initialCount: 3 },
+    });
+
+    expect(result.current.count).toBe(3);
+
+    actHook(() => result.current.increment());
+    expect(result.current.count).toBe(4);
+
+    actHook(() => result.current.decrement());
+    expect(result.current.count).toBe(3);
+  });
+
+  test('allows customization of the step', () => {
+    const { result } = renderHook(useCounter, { initialProps: { step: 2 } });
+
+    expect(result.current.count).toBe(0);
+
+    actHook(() => result.current.increment());
+    expect(result.current.count).toBe(2);
+
+    actHook(() => result.current.decrement());
+    expect(result.current.count).toBe(0);
+  });
+  ```
+
+  - we can even test re-rendering and changing the value of the step
+
+    ```jsx
+    test('the step can be changed', () => {
+      const { result, rerender } = renderHook(useCounter, {
+        initialProps: { step: 3 },
+      });
+
+      expect(result.current.count).toBe(0);
+
+      actHook(() => result.current.increment());
+      expect(result.current.count).toBe(3);
+
+      rerender({ step: 2 });
+
+      actHook(() => result.current.decrement());
+      expect(result.current.count).toBe(1);
+    });
+    ```
+
+    - fyi imported `act` as `actHook` from `@testing-library/react-hooks` because i wanted to save the other examples and the name was duplicated
 
 # Finished Testing React Apps

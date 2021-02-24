@@ -3,18 +3,19 @@
 
 import * as React from 'react'
 import {render, screen, act} from '@testing-library/react'
+import {renderHook, act as actHook} from '@testing-library/react-hooks'
 import userEvent from '@testing-library/user-event'
 import useCounter from '../../components/use-counter'
 
-const setup = ({initialProps} = {}) => {
-  const result = {}
-  const TestComponent = () => {
-    result.current = useCounter(initialProps)
-    return null
-  }
-  render(<TestComponent />)
-  return result
-}
+// const setup = ({initialProps} = {}) => {
+//   const result = {}
+//   const TestComponent = () => {
+//     result.current = useCounter(initialProps)
+//     return null
+//   }
+//   render(<TestComponent />)
+//   return result
+// }
 
 // 🐨 create a simple function component that uses the useCounter hook
 // and then exposes some UI that our test can interact with to test the
@@ -59,39 +60,52 @@ test('exposes the count and increment/decrement functions', () => {
 })
 
 test('exposes the count and increment/decrement function (hooks)', () => {
-  const result = setup()
+  const {result} = renderHook(useCounter)
 
   expect(result.current.count).toBe(0)
 
-  act(() => result.current.increment())
+  actHook(() => result.current.increment())
   expect(result.current.count).toBe(1)
 
-  act(() => result.current.decrement())
+  actHook(() => result.current.decrement())
   expect(result.current.count).toBe(0)
 })
 
 test('allows customization of the initial count', () => {
-  const result = setup({initialProps: {initialCount: 3}})
+  const {result} = renderHook(useCounter, {initialProps: {initialCount: 3}})
 
   expect(result.current.count).toBe(3)
 
-  act(() => result.current.increment())
+  actHook(() => result.current.increment())
   expect(result.current.count).toBe(4)
 
-  act(() => result.current.decrement())
+  actHook(() => result.current.decrement())
   expect(result.current.count).toBe(3)
 })
 
 test('allows customization of the step', () => {
-  const result = setup({initialProps: {step: 2}})
+  const {result} = renderHook(useCounter, {initialProps: {step: 2}})
 
   expect(result.current.count).toBe(0)
 
-  act(() => result.current.increment())
+  actHook(() => result.current.increment())
   expect(result.current.count).toBe(2)
 
-  act(() => result.current.decrement())
+  actHook(() => result.current.decrement())
   expect(result.current.count).toBe(0)
 })
 
+test('the step can be changed', () => {
+  const {result, rerender} = renderHook(useCounter, {initialProps: {step: 3}})
+
+  expect(result.current.count).toBe(0)
+
+  actHook(() => result.current.increment())
+  expect(result.current.count).toBe(3)
+
+  rerender({step: 2})
+
+  actHook(() => result.current.decrement())
+  expect(result.current.count).toBe(1)
+})
 /* eslint no-unused-vars:0 */
