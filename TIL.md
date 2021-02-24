@@ -6141,6 +6141,154 @@ test('omitting the password results in an error', async () => {
 
 ### Extra Credit 2: Setup Function
 
+- Testing customization of one of the props
+- If you have the initial value in the prop, you can customize the input and test accordingly
+
+  ```jsx
+  function useCounter({ initialCount = 0, step = 1 } = {}) {
+    const [count, setCount] = React.useState(initialCount);
+
+    const increment = () => setCount((c) => c + step);
+    const decrement = () => setCount((c) => c - step);
+
+    return { count, increment, decrement };
+  }
+  ```
+
+- So as seen on above component, if you have initialCount prop setup like that you can customize it and you can test it as well.
+- Pretty simple:
+
+  ```jsx
+  test('allows customization of the initial count', () => {
+    let result;
+    const TestComponent = () => {
+      result = useCounter({ initialCount: 3 });
+      return null;
+    };
+    render(<TestComponent />);
+    console.log(result);
+    expect(result.count).toBe(3);
+
+    act(() => result.increment());
+    expect(result.count).toBe(4);
+
+    act(() => result.decrement());
+    expect(result.count).toBe(3);
+  });
+  ```
+
+- same thing with step
+
+  ```jsx
+  test('allows customization of the step', () => {
+    let result;
+    const TestComponent = () => {
+      result = useCounter({ step: 2 });
+      return null;
+    };
+    render(<TestComponent />);
+
+    expect(result.count).toBe(0);
+
+    act(() => result.increment());
+    expect(result.count).toBe(2);
+
+    act(() => result.decrement());
+    expect(result.count).toBe(0);
+  });
+  ```
+
+- but note - DUPLICATE CODE!
+- abstract out (with variable biniding issue fixed)
+
+  ```jsx
+  const setup = ({ initialProps } = {}) => {
+    let result;
+
+    const TestComponent = () => {
+      result = useCounter(initialProps);
+      return null;
+    };
+
+    render(<TestComponent />);
+    return result;
+  };
+
+  test('exposes the count and increment/decrement function (hooks)', () => {
+    const result = setup();
+
+    expect(result.current.count).toBe(0);
+
+    act(() => result.current.increment());
+    expect(result.current.count).toBe(1);
+
+    act(() => result.current.decrement());
+    expect(result.current.count).toBe(0);
+  });
+  ```
+
+  - this test will fail because
+
+    - `referential equality`
+    - because we re-render the `testComponent` function, we reassign the result to a _new_ object.
+
+      > Just because we're reassigning this variable, doesn't mean that we're reassigning this variable
+
+      - there are two different bindinigs to the same objects at first,
+        1. The first binding here gets reassigned to a new object
+        2. The other binding remains at the old object
+        - Need to have some binding that's shared to a single object which then will continuously update
+
+      ```jsx
+      const setup = ({ initialProps } = {}) => {
+        const result = {};
+        const TestComponent = () => {
+          result.current = useCounter(initialProps);
+          return null;
+        };
+        render(<TestComponent />);
+        return result;
+      };
+      ```
+    - then update the rest of the test
+      ```jsx
+        test('exposes the count and increment/decrement function (hooks)', () => {
+        const result = setup()
+
+        expect(result.current.count).toBe(0)
+
+        act(() => result.current.increment())
+        expect(result.current.count).toBe(1)
+
+        act(() => result.current.decrement())
+        expect(result.current.count).toBe(0)
+      })
+
+      test('allows customization of the initial count', () => {
+        const result = setup({initialProps: {initialCount: 3}})
+
+        expect(result.current.count).toBe(3)
+
+        act(() => result.current.increment())
+        expect(result.current.count).toBe(4)
+
+        act(() => result.current.decrement())
+        expect(result.current.count).toBe(3)
+      })
+
+      test('allows customization of the step', () => {
+        const result = setup({initialProps: {step: 2}})
+
+        expect(result.current.count).toBe(0)
+
+        act(() => result.current.increment())
+        expect(result.current.count).toBe(2)
+
+        act(() => result.current.decrement())
+        expect(result.current.count).toBe(0)
+      })
+      ```
+
 ### Extra Credit 3: Using React-Hooks Testing Library
 
 # Finished Testing React Apps
