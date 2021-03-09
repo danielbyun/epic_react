@@ -6359,3 +6359,7 @@ test('omitting the password results in an error', async () => {
     - fyi imported `act` as `actHook` from `@testing-library/react-hooks` because i wanted to save the other examples and the name was duplicated
 
 # Finished Testing React Apps
+
+# 3/9/21 finally starting building an epic react project workshop!
+
+## Exercise 1: Bootstrap
