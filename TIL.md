@@ -6633,3 +6633,184 @@ test('omitting the password results in an error', async () => {
   // 💰 find the root element with: document.getElementById('root')
   render(<App />, document.getElementById('root'));
   ```
+
+## Exercise 2: Styling
+
+- this exercise was pretty simple because the components were already made for me so i just had to import emotion, bootstrap, and style the divs that kent gave
+- maybe i'll start implementing emotion because the look is nice actually
+- emotion with material ui tho??
+
+  ```javascript
+  import styled from '@emotion/styled';
+  import { Dialog as ReachDialog } from '@reach/dialog';
+
+  const buttonVariants = {
+    primary: {
+      background: '#3f51b5',
+      color: 'white',
+    },
+    secondary: {
+      background: '#f1f2f7',
+      color: '#434449',
+    },
+  };
+
+  const Button = styled.button(
+    {
+      padding: '10px 15px',
+      border: 0,
+      lineHeight: 1,
+      borderRadius: '3px',
+    },
+    ({ variant = 'primary' }) => buttonVariants[variant] // taking props and assigning depending on what the variant is
+  );
+
+  const Input = styled.input({
+    borderRadius: '3px',
+    border: '1px solid #f1f1f4',
+    background: '#f1f2f7',
+    padding: '8px 12px',
+  });
+
+  const FormGroup = styled.div({
+    display: 'flex',
+    flexDirection: 'column',
+  });
+
+  const CircleButton = styled.button({
+    borderRadius: '30px',
+    padding: '0',
+    width: '40px',
+    height: '40px',
+    lineHeight: '1',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'white',
+    color: '#434449',
+    border: `1px solid #f1f1f4`,
+    cursor: 'pointer',
+  });
+
+  const Dialog = styled(ReachDialog)({
+    maxWidth: '450px',
+    borderRadius: '3px',
+    paddingBottom: '3.5em',
+    boxShadow: '0 10px 30px -5px rgba(0, 0, 0, 0.2)',
+    margin: '20vh auto',
+    '@media (max-width: 991px)': {
+      width: '100%',
+      margin: '10vh auto',
+    },
+  });
+
+  export { CircleButton, Dialog, Button, FormGroup, Input };
+  ```
+
+  ```javascript
+  /** @jsx jsx */
+  import { jsx } from '@emotion/core';
+  import 'bootstrap/dist/css/bootstrap-reboot.css';
+  import '@reach/dialog/styles.css';
+
+  import * as React from 'react';
+  import ReactDOM from 'react-dom';
+  import { Button, Input, FormGroup } from './components/lib';
+  import { Modal, ModalContents, ModalOpenButton } from './components/modal';
+  import { Logo } from './components/logo';
+
+  function LoginForm({ onSubmit, submitButton }) {
+    function handleSubmit(event) {
+      event.preventDefault();
+      const { username, password } = event.target.elements;
+
+      onSubmit({
+        username: username.value,
+        password: password.value,
+      });
+    }
+
+    return (
+      <form
+        onSubmit={handleSubmit}
+        css={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'stretch',
+          '> div': {
+            margin: '10px auto',
+            width: '100%',
+            maxWidth: '300px',
+          },
+        }}>
+        <FormGroup>
+          <label htmlFor='username'>Username</label>
+          <Input id='username' />
+        </FormGroup>
+        <FormGroup>
+          <label htmlFor='password'>Password</label>
+          <Input id='password' type='password' />
+        </FormGroup>
+        <FormGroup>
+          {React.cloneElement(submitButton, { type: 'submit' })}
+        </FormGroup>
+      </form>
+    );
+  }
+
+  function App() {
+    function login(formData) {
+      console.log('login', formData);
+    }
+
+    function register(formData) {
+      console.log('register', formData);
+    }
+
+    return (
+      <div
+        css={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'Center',
+          justifyContent: 'center',
+          width: '100%',
+          height: '100vh',
+        }}>
+        <Logo width='80' height='80' />
+        <h1>Bookshelf</h1>
+        <div
+          css={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+            gridGap: '0.75rem',
+          }}>
+          <Modal>
+            <ModalOpenButton>
+              <Button variant='primary'>Login</Button>
+            </ModalOpenButton>
+            <ModalContents aria-label='Login form' title='Login'>
+              <LoginForm
+                onSubmit={login}
+                submitButton={<Button variant='primary'>Login</Button>}
+              />
+            </ModalContents>
+          </Modal>
+          <Modal>
+            <ModalOpenButton>
+              <Button variant='secondary'>Register</Button>
+            </ModalOpenButton>
+            <ModalContents aria-label='Registration form' title='Register'>
+              <LoginForm
+                onSubmit={register}
+                submitButton={<Button variant='secondary'>Register</Button>}
+              />
+            </ModalContents>
+          </Modal>
+        </div>
+      </div>
+    );
+  }
+
+  ReactDOM.render(<App />, document.getElementById('root'));
+  ```
