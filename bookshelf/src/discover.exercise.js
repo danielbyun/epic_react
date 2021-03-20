@@ -29,6 +29,7 @@ function DiscoverBooksScreen() {
     data: null,
     query: '',
     queried: false,
+    error: null,
   }
 
   const DiscoverReducer = (state = initialState, {type, payload}) => {
@@ -53,6 +54,11 @@ function DiscoverBooksScreen() {
           ...state,
           data: payload,
         }
+      case 'set error':
+        return {
+          ...state,
+          error: payload,
+        }
       case 'multiple dispatches':
         return {
           ...state,
@@ -64,10 +70,10 @@ function DiscoverBooksScreen() {
     }
   }
 
-  const [{status, data, query, queried}, discoverDispatch] = React.useReducer(
-    DiscoverReducer,
-    initialState,
-  )
+  const [
+    {status, data, query, queried, error},
+    discoverDispatch,
+  ] = React.useReducer(DiscoverReducer, initialState)
 
   // 🐨 Add a useEffect callback here for making the request with the
   // client and updating the status and data.
@@ -83,14 +89,8 @@ function DiscoverBooksScreen() {
       payload: 'loading',
     })
 
-    window
-      .fetch(
-        `${process.env.REACT_APP_API_URL}/books?query=${encodeURIComponent(
-          query,
-        )}`,
-      )
-      .then(res => res.json())
-      .then(responseData => {
+    client(`books?query=${encodeURIComponent(query)}`).then(
+      responseData => {
         discoverDispatch({
           type: 'multiple dispatches',
           payload: {
@@ -100,7 +100,18 @@ function DiscoverBooksScreen() {
         })
         // setStatus('success')
         // setData(responseData)
-      })
+      },
+      errorData => {
+        console.log(errorData)
+        discoverDispatch({
+          type: 'multiple dispatches',
+          payload: {
+            status: 'error',
+            error: errorData,
+          },
+        })
+      },
+    )
   }, [query, queried])
 
   // 💰 Here's the endpoint you'll call: `books?query=${encodeURIComponent(query)}`
@@ -111,6 +122,7 @@ function DiscoverBooksScreen() {
   // 🐨 replace these with derived state values based on the status.
   const isLoading = status === 'loading'
   const isSuccess = status === 'success'
+  const isError = status === 'error'
 
   function handleSearchSubmit(event) {
     // 🐨 call preventDefault on the event so you don't get a full page reload
@@ -155,6 +167,8 @@ function DiscoverBooksScreen() {
           </label>
         </Tooltip>
       </form>
+
+      {isError ? 'oh no' : null}
 
       {isSuccess ? (
         data?.books?.length ? (
