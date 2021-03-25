@@ -5,13 +5,14 @@ import * as React from 'react'
 
 import './bootstrap'
 import Tooltip from '@reach/tooltip'
-import {FaSearch} from 'react-icons/fa'
+import {FaSearch, FaTimes} from 'react-icons/fa'
 import {Input, BookListUL, Spinner} from './components/lib'
 import {BookRow} from './components/book-row'
 import {client} from './utils/api-client'
+import * as colors from './styles/colors'
 // 🐨 import the client from './utils/api-client'
 
-function DiscoverBooksScreen() {
+const DiscoverBooksScreen = () => {
   // 🐨 add state for status ('idle', 'loading', or 'success'), data, and query
   // const [status, setStatus] = React.useState('idle')
   // const [data, setData] = React.useState()
@@ -124,7 +125,7 @@ function DiscoverBooksScreen() {
   const isSuccess = status === 'success'
   const isError = status === 'error'
 
-  function handleSearchSubmit(event) {
+  const handleSearchSubmit = event => {
     // 🐨 call preventDefault on the event so you don't get a full page reload
     // 🐨 set the queried state to true
     // 🐨 set the query value which you can get from event.target.elements
@@ -162,13 +163,24 @@ function DiscoverBooksScreen() {
                 background: 'transparent',
               }}
             >
-              {isLoading ? <Spinner /> : <FaSearch aria-label="search" />}
+              {isLoading ? (
+                <Spinner />
+              ) : isError ? (
+                <FaTimes aria-label="error" css={{color: colors.danger}} />
+              ) : (
+                <FaSearch aria-label="search" />
+              )}
             </button>
           </label>
         </Tooltip>
       </form>
 
-      {isError ? 'oh no' : null}
+      {isError ? (
+        <div css={{color: colors.danger}}>
+          <p>There was an error:</p>
+          <pre>{error.message}</pre>
+        </div>
+      ) : null}
 
       {isSuccess ? (
         data?.books?.length ? (
