@@ -10,6 +10,7 @@ import {Input, BookListUL, Spinner} from './components/lib'
 import {BookRow} from './components/book-row'
 import {client} from './utils/api-client'
 import * as colors from './styles/colors'
+import {useAsync} from './utils/hooks'
 // 🐨 import the client from './utils/api-client'
 
 const DiscoverBooksScreen = () => {
@@ -26,20 +27,13 @@ const DiscoverBooksScreen = () => {
 
   /* my own thing */
   const initialState = {
-    status: 'idle',
-    data: null,
     query: '',
     queried: false,
-    error: null,
   }
+  const {data, error, run, isLoading, isError, isSuccess} = useAsync()
 
   const DiscoverReducer = (state = initialState, {type, payload}) => {
     switch (type) {
-      case 'set status':
-        return {
-          ...state,
-          status: payload,
-        }
       case 'set queried':
         return {
           ...state,
@@ -49,16 +43,6 @@ const DiscoverBooksScreen = () => {
         return {
           ...state,
           query: payload,
-        }
-      case 'set data':
-        return {
-          ...state,
-          data: payload,
-        }
-      case 'set error':
-        return {
-          ...state,
-          error: payload,
         }
       case 'multiple dispatches':
         return {
@@ -71,10 +55,10 @@ const DiscoverBooksScreen = () => {
     }
   }
 
-  const [
-    {status, data, query, queried, error},
-    discoverDispatch,
-  ] = React.useReducer(DiscoverReducer, initialState)
+  const [{query, queried}, discoverDispatch] = React.useReducer(
+    DiscoverReducer,
+    initialState,
+  )
 
   // 🐨 Add a useEffect callback here for making the request with the
   // client and updating the status and data.
@@ -83,47 +67,13 @@ const DiscoverBooksScreen = () => {
       return
     }
 
-    // setStatus('loading')
-
-    discoverDispatch({
-      type: 'set status',
-      payload: 'loading',
-    })
-
-    client(`books?query=${encodeURIComponent(query)}`).then(
-      responseData => {
-        discoverDispatch({
-          type: 'multiple dispatches',
-          payload: {
-            status: 'success',
-            data: responseData,
-          },
-        })
-        // setStatus('success')
-        // setData(responseData)
-      },
-      errorData => {
-        console.log(errorData)
-        discoverDispatch({
-          type: 'multiple dispatches',
-          payload: {
-            status: 'error',
-            error: errorData,
-          },
-        })
-      },
-    )
-  }, [query, queried])
+    run(client(`books?query=${encodeURIComponent(query)}`))
+  }, [query, queried, run])
 
   // 💰 Here's the endpoint you'll call: `books?query=${encodeURIComponent(query)}`
   // 🐨 remember, effect callbacks are called on the initial render too
   // so you'll want to check if the user has submitted the form yet and if
   // they haven't then return early (💰 this is what the queried state is for).
-
-  // 🐨 replace these with derived state values based on the status.
-  const isLoading = status === 'loading'
-  const isSuccess = status === 'success'
-  const isError = status === 'error'
 
   const handleSearchSubmit = event => {
     // 🐨 call preventDefault on the event so you don't get a full page reload
