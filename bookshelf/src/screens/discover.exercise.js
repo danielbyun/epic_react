@@ -4,49 +4,30 @@ import {jsx} from '@emotion/core'
 import * as React from 'react'
 import Tooltip from '@reach/tooltip'
 import {FaSearch, FaTimes} from 'react-icons/fa'
-// 🐨 you'll need useQuery from 'react-query'
-import {useAsync} from 'utils/hooks'
-import {client} from 'utils/api-client'
+// 🐨 swap refetchBookSearchQuery with the new useRefetchBookSearchQuery
+import {useBookSearch, refetchBookSearchQuery} from 'utils/books'
 import * as colors from 'styles/colors'
 import {BookRow} from 'components/book-row'
 import {BookListUL, Spinner, Input} from 'components/lib'
-import bookPlaceholderSvg from 'assets/book-placeholder.svg'
 
-const loadingBook = {
-  title: 'Loading...',
-  author: 'loading...',
-  coverImageUrl: bookPlaceholderSvg,
-  publisher: 'Loading Publishing',
-  synopsis: 'Loading...',
-  loadingBook: true,
-}
-
-const loadingBooks = Array.from({length: 10}, (v, index) => ({
-  id: `loading-book-${index}`,
-  ...loadingBook,
-}))
-
+// 💣 remove the user prop here
 function DiscoverBooksScreen({user}) {
   const [query, setQuery] = React.useState('')
   const [queried, setQueried] = React.useState(false)
-  // 🐨 replace this useAsync call with a useQuery call to handle the book search
-  // the queryKey should be ['bookSearch', {query}]
-  // the queryFn should be the same thing we have in the run function below
-  // you'll get back the same stuff you get from useAsync, (except the run function)
-  const {data, error, run, isLoading, isError, isSuccess} = useAsync()
-
-  const books = data ?? loadingBooks
+  // 💣 remove the user argument here
+  const {books, error, status} = useBookSearch(query, user)
+  // 🐨 use the new useRefetchBookSearchQuery to get the
+  // refetchBookSearchQuery function which handles accessing the user
 
   React.useEffect(() => {
-    if (!queried) {
-      return
-    }
-    run(
-      client(`books?query=${encodeURIComponent(query)}`, {
-        token: user.token,
-      }).then(data => data.books),
-    )
-  }, [query, queried, run, user.token])
+    // 💣 remove the user prop here
+    return () => refetchBookSearchQuery(user)
+    // 💣 remove the user dependency here and add refetchBookSearchQuery instead
+  }, [user])
+
+  const isLoading = status === 'loading'
+  const isSuccess = status === 'success'
+  const isError = status === 'error'
 
   function handleSearchSubmit(event) {
     event.preventDefault()
@@ -115,7 +96,12 @@ function DiscoverBooksScreen({user}) {
           <BookListUL css={{marginTop: 20}}>
             {books.map(book => (
               <li key={book.id} aria-label={book.title}>
-                <BookRow user={user} key={book.id} book={book} />
+                <BookRow
+                  // 💣 remove the user prop here
+                  user={user}
+                  key={book.id}
+                  book={book}
+                />
               </li>
             ))}
           </BookListUL>
