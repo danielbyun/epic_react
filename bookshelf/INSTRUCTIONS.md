@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # Authentication
+=======
+# Bookshelf Instructions
+>>>>>>> 29b1c3bb693e0c2b81465d1427e29bee3379f8fc
 
 ## 📝 Your Notes
 
@@ -6,6 +10,7 @@ Elaborate on your learnings here in `INSTRUCTIONS.md`
 
 ## Background
 
+<<<<<<< HEAD
 ### Authenticated HTTP requests
 
 Applications without user authentication cannot reliably store and present data
@@ -263,10 +268,35 @@ client('http://example.com/pets', {
 **Files:**
 
 - `src/utils/api-client.js`
+=======
+Each exercise will have some background information to help orient you around
+the new concepts we'll be learning.
+
+## Exercise
+
+Here's where the exercise description will go. 👨‍💼 Peter will be giving you
+project requirements here.
+
+### Files
+
+A list of the files you need to open to complete the exercise will be here. For
+each file, there will be another file next to it with the suffix `.final` which
+you can use as a reference if you get totally stuck.
+
+## Extra Credit
+
+### 💯 Example
+
+Some of the exercises will come with extra credit you can do.
+>>>>>>> 29b1c3bb693e0c2b81465d1427e29bee3379f8fc
 
 ## 🦉 Elaboration and Feedback
 
 After the instruction, if you want to remember what you've just learned, then
 fill out the elaboration and feedback form:
 
+<<<<<<< HEAD
 https://ws.kcd.im/?ws=Build%20React%20Apps&e=04%3A%20Authentication&em=
+=======
+https://ws.kcd.im/?ws=Build%20React%20Apps&e=&em=
+>>>>>>> 29b1c3bb693e0c2b81465d1427e29bee3379f8fc

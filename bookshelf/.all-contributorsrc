@@ -430,6 +430,18 @@
       "contributions": [
         "doc"
       ]
+<<<<<<< HEAD
+=======
+    },
+    {
+      "login": "jeltehomminga",
+      "name": "Jelte Homminga",
+      "avatar_url": "https://avatars.githubusercontent.com/u/35220102?v=4",
+      "profile": "https://jelte.tech",
+      "contributions": [
+        "doc"
+      ]
+>>>>>>> 29b1c3bb693e0c2b81465d1427e29bee3379f8fc
     }
   ],
   "contributorsPerLine": 7,
