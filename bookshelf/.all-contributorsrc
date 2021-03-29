@@ -412,6 +412,33 @@
         "code",
         "bug"
       ]
+    },
+    {
+      "login": "hmttrp",
+      "name": "Hendrik Mittrop",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4592406?v=4",
+      "profile": "https://github.com/hmttrp",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "payapula",
+      "name": "payapula",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7134153?v=4",
+      "profile": "https://github.com/payapula",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "jeltehomminga",
+      "name": "Jelte Homminga",
+      "avatar_url": "https://avatars.githubusercontent.com/u/35220102?v=4",
+      "profile": "https://jelte.tech",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
