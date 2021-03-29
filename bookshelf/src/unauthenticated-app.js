@@ -5,10 +5,6 @@ import * as React from 'react'
 import {Input, Button, Spinner, FormGroup, ErrorMessage} from './components/lib'
 import {Modal, ModalContents, ModalOpenButton} from './components/modal'
 import {Logo} from './components/logo'
-<<<<<<< HEAD
-=======
-import {useAuth} from './context/auth-context'
->>>>>>> 29b1c3bb693e0c2b81465d1427e29bee3379f8fc
 import {useAsync} from './utils/hooks'
 
 function LoginForm({onSubmit, submitButton}) {
@@ -62,12 +58,7 @@ function LoginForm({onSubmit, submitButton}) {
   )
 }
 
-<<<<<<< HEAD
 function UnauthenticatedApp({login, register}) {
-=======
-function UnauthenticatedApp() {
-  const {login, register} = useAuth()
->>>>>>> 29b1c3bb693e0c2b81465d1427e29bee3379f8fc
   return (
     <div
       css={{
@@ -115,8 +106,4 @@ function UnauthenticatedApp() {
   )
 }
 
-<<<<<<< HEAD
 export {UnauthenticatedApp}
-=======
-export default UnauthenticatedApp
->>>>>>> 29b1c3bb693e0c2b81465d1427e29bee3379f8fc

@@ -1,22 +1,11 @@
 /** @jsx jsx */
 import {jsx} from '@emotion/core'
 
-<<<<<<< HEAD
-import * as React from 'react'
-import {Button} from './components/lib'
-import * as mq from './styles/media-queries'
-import {DiscoverBooksScreen} from './discover'
-
-function AuthenticatedApp({user, logout}) {
-  return (
-    <React.Fragment>
-=======
 import {Routes, Route, Link as RouterLink, useMatch} from 'react-router-dom'
 import {ErrorBoundary} from 'react-error-boundary'
 import {Button, ErrorMessage, FullPageErrorFallback} from './components/lib'
 import * as mq from './styles/media-queries'
 import * as colors from './styles/colors'
-import {useAuth} from './context/auth-context'
 import {ReadingListScreen} from './screens/reading-list'
 import {FinishedScreen} from './screens/finished'
 import {DiscoverBooksScreen} from './screens/discover'
@@ -38,11 +27,9 @@ function ErrorFallback({error}) {
   )
 }
 
-function AuthenticatedApp() {
-  const {user, logout} = useAuth()
+function AuthenticatedApp({user, logout}) {
   return (
     <ErrorBoundary FallbackComponent={FullPageErrorFallback}>
->>>>>>> 29b1c3bb693e0c2b81465d1427e29bee3379f8fc
       <div
         css={{
           display: 'flex',
@@ -73,21 +60,12 @@ function AuthenticatedApp() {
           },
         }}
       >
-<<<<<<< HEAD
-        <DiscoverBooksScreen />
-      </div>
-    </React.Fragment>
-  )
-}
-
-export {AuthenticatedApp}
-=======
         <div css={{position: 'relative'}}>
           <Nav />
         </div>
         <main css={{width: '100%'}}>
           <ErrorBoundary FallbackComponent={ErrorFallback}>
-            <AppRoutes />
+            <AppRoutes user={user} />
           </ErrorBoundary>
         </main>
       </div>
@@ -130,7 +108,7 @@ function NavLink(props) {
   )
 }
 
-function Nav(params) {
+function Nav() {
   return (
     <nav
       css={{
@@ -165,17 +143,16 @@ function Nav(params) {
   )
 }
 
-function AppRoutes() {
+function AppRoutes({user}) {
   return (
     <Routes>
-      <Route path="/list" element={<ReadingListScreen />} />
-      <Route path="/finished" element={<FinishedScreen />} />
-      <Route path="/discover" element={<DiscoverBooksScreen />} />
-      <Route path="/book/:bookId" element={<BookScreen />} />
+      <Route path="/list" element={<ReadingListScreen user={user} />} />
+      <Route path="/finished" element={<FinishedScreen user={user} />} />
+      <Route path="/discover" element={<DiscoverBooksScreen user={user} />} />
+      <Route path="/book/:bookId" element={<BookScreen user={user} />} />
       <Route path="*" element={<NotFoundScreen />} />
     </Routes>
   )
 }
 
-export default AuthenticatedApp
->>>>>>> 29b1c3bb693e0c2b81465d1427e29bee3379f8fc
+export {AuthenticatedApp}

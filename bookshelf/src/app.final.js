@@ -3,28 +3,83 @@ import {jsx} from '@emotion/core'
 
 import * as React from 'react'
 import * as auth from 'auth-provider'
+import {BrowserRouter as Router} from 'react-router-dom'
+import {queryCache} from 'react-query'
+import {FullPageSpinner} from './components/lib'
+import * as colors from './styles/colors'
+import {client} from './utils/api-client'
+import {useAsync} from './utils/hooks'
 import {AuthenticatedApp} from './authenticated-app'
 import {UnauthenticatedApp} from './unauthenticated-app'
 
-<<<<<<< HEAD
-const App = () => {
-=======
-function App() {
->>>>>>> f5e2dcab78f014173ef56d67d9e42f107bf23583
-  const [user, setUser] = React.useState(null)
+async function getUser() {
+  let user = null
 
-  const login = form => auth.login(form).then(u => setUser(u))
-  const register = form => auth.register(form).then(u => setUser(u))
-  const logout = () => {
-    auth.logout()
-    setUser(null)
+  const token = await auth.getToken()
+  if (token) {
+    const data = await client('me', {token})
+    user = data.user
   }
 
-  return user ? (
-    <AuthenticatedApp user={user} logout={logout} />
-  ) : (
-    <UnauthenticatedApp login={login} register={register} />
-  )
+  return user
+}
+
+function App() {
+  const {
+    data: user,
+    error,
+    isLoading,
+    isIdle,
+    isError,
+    isSuccess,
+    run,
+    setData,
+  } = useAsync()
+
+  React.useEffect(() => {
+    run(getUser())
+  }, [run])
+
+  const login = form => auth.login(form).then(user => setData(user))
+  const register = form => auth.register(form).then(user => setData(user))
+  const logout = () => {
+    auth.logout()
+    queryCache.clear()
+    setData(null)
+  }
+
+  if (isLoading || isIdle) {
+    return <FullPageSpinner />
+  }
+
+  if (isError) {
+    return (
+      <div
+        css={{
+          color: colors.danger,
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <p>Uh oh... There's a problem. Try refreshing the app.</p>
+        <pre>{error.message}</pre>
+      </div>
+    )
+  }
+
+  if (isSuccess) {
+    const props = {user, login, register, logout}
+    return user ? (
+      <Router>
+        <AuthenticatedApp {...props} />
+      </Router>
+    ) : (
+      <UnauthenticatedApp {...props} />
+    )
+  }
 }
 
 export {App}
