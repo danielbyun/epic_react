@@ -3,7 +3,6 @@ import './bootstrap'
 import * as React from 'react'
 import ReactDOM from 'react-dom'
 import {ReactQueryConfigProvider} from 'react-query'
-import {AuthProvider} from './context/auth-context'
 import {App} from './app'
 
 const queryConfig = {
@@ -17,12 +16,11 @@ const queryConfig = {
     },
   },
 }
+
 loadDevTools(() => {
   ReactDOM.render(
     <ReactQueryConfigProvider config={queryConfig}>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
+      <App />
     </ReactQueryConfigProvider>,
     document.getElementById('root'),
   )

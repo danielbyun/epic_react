@@ -2,8 +2,5 @@
 
 export * from './index.exercise'
 
-// 💯 create an `AuthProvider` component
+// 💯 Wrap the <App /> in a <ReactQueryConfigProvider />
 // export * from './index.extra-2'
-
-// 💯 colocate global providers
-// export * from './index.extra-3'

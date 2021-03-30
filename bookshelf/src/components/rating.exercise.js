@@ -2,10 +2,14 @@
 import {jsx} from '@emotion/core'
 
 import * as React from 'react'
-import {useUpdateListItem} from 'utils/list-items'
+// 🐨 you'll need useMutation and queryCache from react-query
+// 🐨 you'll also need the client from utils/api-client
 import {FaStar} from 'react-icons/fa'
 import * as colors from 'styles/colors'
-import {ErrorMessage} from 'components/lib'
+// import {queryCache, useMutation} from 'react-query'
+// import {client} from 'utils/api-client.exercise'
+import {useUpdateListItem} from 'utils/list-items.exercise'
+import {ErrorMessage} from './lib'
 
 const visuallyHiddenCSS = {
   border: '0',
@@ -17,10 +21,25 @@ const visuallyHiddenCSS = {
   position: 'absolute',
   width: '1px',
 }
-// 💣 remove the user prop
+
 function Rating({listItem, user}) {
   const [isTabbing, setIsTabbing] = React.useState(false)
-  // 💣 we no longer need to pass the user here:
+  // 🐨 call useMutation here and call the function "update"
+  // the mutate function should call the list-items/:listItemId endpoint with a PUT
+  //   and the updates as data. The mutate function will be called with the updates
+  //   you can pass as data.
+  // 💰 if you want to get the list-items cache updated after this query finishes
+  // the use the `onSettled` config option to queryCache.invalidateQueries('list-items')
+  // const [update] = useMutation(
+  //   updates =>
+  //     client(`list-items/${listItem.id}`, {
+  //       method: 'PUT',
+  //       data: updates,
+  //       token: user.token,
+  //     }),
+  //   {onSettled: () => queryCache.invalidateQueries('list-items')},
+  // )
+
   const [update, {error, isError}] = useUpdateListItem(user)
 
   React.useEffect(() => {
