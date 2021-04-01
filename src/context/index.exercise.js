@@ -18,7 +18,7 @@ const AppProviders = ({children}) => {
   return (
     <ReactQueryConfigProvider config={queryConfig}>
       <Router>
-        <AuthProvider>{children}}</AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </Router>
     </ReactQueryConfigProvider>
   )
