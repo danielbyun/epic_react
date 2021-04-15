@@ -1,7 +1,9 @@
+import React from 'react'
+
 // 🐨 you're going to need the Dialog component
 // It's just a light wrapper around ReachUI Dialog
 // 📜 https://reacttraining.com/reach-ui/dialog/
-// import {Dialog} from './lib'
+import {CircleButton, Dialog} from './lib'
 
 // 💰 Here's a reminder of how your components will be used:
 /*
@@ -43,3 +45,74 @@
 // 💰 be sure to forward along the rest of the props (especially children).
 
 // 🐨 don't forget to export all the components here
+import VisuallyHidden from '@reach/visually-hidden'
+
+const callAll = (...functions) => (...args) =>
+  functions.forEach(fn => fn && fn(...args))
+
+const ModalContext = React.createContext()
+ModalContext.displayName = 'ModalContext'
+
+const Modal = props => {
+  const [isOpen, setIsOpen] = React.useState(false)
+  return <ModalContext.Provider value={[isOpen, setIsOpen]} {...props} />
+}
+
+const ModalDismissButton = ({children: child}) => {
+  const [, setIsOpen] = React.useContext(ModalContext)
+  return React.cloneElement(child, {
+    // onClick: (...args) => {
+    //   setIsOpen(false)
+    //   if (child.props.onClick) {
+    //     child.props.onClick(...args)
+    //   }
+    // },
+    onClick: callAll(() => setIsOpen(false), child.props.onClick),
+  })
+}
+
+const ModalOpenButton = ({children: child}) => {
+  const [, setIsOpen] = React.useContext(ModalContext)
+  return React.cloneElement(child, {
+    onClick: callAll(() => setIsOpen(true), child.props.onClick),
+  })
+}
+
+const ModalContentsBase = props => {
+  const [isOpen, setIsOpen] = React.useContext(ModalContext)
+  return (
+    <Dialog isOpen={isOpen} onDismiss={() => setIsOpen(false)} {...props} />
+  )
+}
+
+const ModalContents = ({title, children, ...props}) => {
+  return (
+    <ModalContentsBase {...props}>
+      <div
+        css={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          border: '1px solid red',
+        }}
+      >
+        <ModalDismissButton>
+          {/* 💰 here's what you should put in your <ModalDismissButton> */}
+          <CircleButton>
+            <VisuallyHidden>Close</VisuallyHidden>
+            <span aria-hidden>×</span>
+          </CircleButton>
+        </ModalDismissButton>
+      </div>
+      <h3 css={{textAlign: 'center', fontSize: '2em'}}>{title}</h3>
+      {children}
+    </ModalContentsBase>
+  )
+}
+
+export {
+  Modal,
+  ModalDismissButton,
+  ModalOpenButton,
+  ModalContentsBase,
+  ModalContents,
+}
