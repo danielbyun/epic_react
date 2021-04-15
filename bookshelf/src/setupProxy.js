@@ -1,4 +1,4 @@
-const proxy = app => {
+function proxy(app) {
   app.get(/^\/$/, (req, res) => res.redirect('/list'))
 
   // https://twitter.com/kentcdodds/status/1299182472412958722
