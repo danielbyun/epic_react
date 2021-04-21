@@ -8,7 +8,9 @@ import {useAuth} from './context/auth-context'
 // import {AuthenticatedApp} from './authenticated-app'
 // import {UnauthenticatedApp} from './unauthenticated-app'
 
-const AuthenticatedApp = React.lazy(() => import(/*  */ './authenticated-app'))
+const AuthenticatedApp = React.lazy(() =>
+  import(/* webpackPrefetch: true */ './authenticated-app'),
+)
 const UnauthenticatedApp = React.lazy(() => import('./unauthenticated-app'))
 
 function App() {
