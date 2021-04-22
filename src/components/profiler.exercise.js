@@ -6,18 +6,15 @@ let queue = []
 setInterval(sendProfileQueue, 5000)
 
 function sendProfileQueue() {
-  if (!queue.length) {
-    return Promise.resolve({success: true})
-  }
+  if (!queue.length) return Promise.resolve({success: true})
 
   const queueToSend = [...queue]
   queue = []
-
   return client('profile', {data: queueToSend})
 }
 
 // this is for extra credit
-const Profiler = ({phases, metadata, ...props}) => {
+function Profiler({phases, metadata, ...props}) {
   const reportProfile = (
     id,
     phase,
