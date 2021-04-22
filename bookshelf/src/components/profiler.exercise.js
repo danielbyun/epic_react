@@ -42,3 +42,4 @@ function Profiler({phases, metadata, ...props}) {
 }
 
 export {Profiler}
+export {unstable_wrap as wrap, unstable_trace as trace} from 'scheduler/tracing'

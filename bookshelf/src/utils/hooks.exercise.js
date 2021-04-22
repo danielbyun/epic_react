@@ -1,3 +1,4 @@
+import {wrap} from 'components/profiler.exercise'
 import * as React from 'react'
 
 function useSafeDispatch(dispatch) {
@@ -51,14 +52,15 @@ function useAsync(initialState) {
       }
       safeSetState({status: 'pending'})
       return promise.then(
-        data => {
+        // we wrap this to add 'interaction' to the profiler when the data comes BACK from server
+        wrap(data => {
           setData(data)
           return data
-        },
-        error => {
+        }),
+        wrap(error => {
           setError(error)
           return error
-        },
+        }),
       )
     },
     [safeSetState, setData, setError],
