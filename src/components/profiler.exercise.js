@@ -33,7 +33,7 @@ function Profiler({phases, metadata, ...props}) {
         baseDuration,
         startTime,
         commitTime,
-        interactions,
+        interactions: [...interactions],
       })
     }
   }
