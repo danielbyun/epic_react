@@ -17,10 +17,6 @@ const apiURL = process.env.REACT_APP_API_URL
 jest.mock('react-query')
 jest.mock('auth-provider')
 
-beforeAll(() => server.listen())
-afterAll(() => server.close())
-afterEach(() => server.resetHandlers())
-
 test('calls fetch at the endpoint with the arguments for GET, requests', async () => {
   // 🐨 add a server handler to handle a test request you'll be making
   // 💰 because this is the first one, I'll give you the code for how to do that.
@@ -134,4 +130,17 @@ test('automatically logs the user out if a request returns a 401', async () => {
 
   expect(queryCache.clear).toHaveBeenCalledTimes(1)
   expect(auth.logout).toHaveBeenCalledTimes(1)
+})
+
+test('Correctly rejects the promise if there is an error', async () => {
+  const endpoint = 'test-endpoint'
+  const testError = {message: 'Test error'}
+  server.use(
+    rest.get(`${apiURL}/${endpoint}`, async (req, res, ctx) => {
+      return res(ctx.status(400), ctx.json(testError))
+    }),
+  )
+
+  // can test Promises by testing 'resolves' and 'rejects' like below
+  await expect(client(endpoint)).rejects.toEqual(testError)
 })
