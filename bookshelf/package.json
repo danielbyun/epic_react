@@ -2,7 +2,7 @@
   "name": "bookshelf",
   "version": "1.0.0",
   "private": true,
-  "homepage": "https://exercises-11-unit-testing.bookshelf.lol/",
+  "homepage": "https://exercises-12-testing-hooks-and-components.bookshelf.lol/",
   "engines": {
     "node": "12 || 14 || 15",
     "npm": ">=6"
