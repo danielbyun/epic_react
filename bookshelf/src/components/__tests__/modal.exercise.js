@@ -7,6 +7,8 @@ import {Modal, ModalContents, ModalOpenButton} from '../modal'
 test('can be opened and closed', () => {
   const label = 'Modal Label'
   const title = 'Modal Title'
+  const content = 'Modal Content'
+
   render(
     <Modal>
       <ModalOpenButton>
@@ -24,11 +26,10 @@ test('can be opened and closed', () => {
 
   const inModal = within(modal)
   expect(inModal.getByRole('heading', {name: title})).toBeInTheDocument()
+  expect(inModal.getByText(content)).toBeInTheDocument()
 
   userEvent.click(inModal.getByRole('button', {name: /close/i}))
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-
-  screen.debug()
 })
 // 🐨 render the Modal, ModalOpenButton, and ModalContents
 // 🐨 click the open button
