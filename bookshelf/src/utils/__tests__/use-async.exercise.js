@@ -207,6 +207,23 @@ test('calling run with a promise which rejects', async () => {
 
 test('can specify an initial state', async () => {
   // 💰 useAsync(customInitialState)
+  const mockData = Symbol('resolved value')
+  const customInitialState = {status: 'resolved', data: mockData}
+  const {result} = renderHook(() => useAsync(customInitialState))
+
+  expect(result.current).toEqual({
+    isIdle: false,
+    isLoading: false,
+    isError: false,
+    isSuccess: true,
+    setData: expect.any(Function),
+    setError: expect.any(Function),
+    error: null,
+    status: 'resolved',
+    data: mockData,
+    run: expect.any(Function),
+    reset: expect.any(Function),
+  })
 })
 
 test('can set the data', async () => {
