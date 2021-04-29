@@ -14,6 +14,14 @@ const deferred = () => {
   return {promise, resolve, reject}
 }
 
+beforeEach(() => {
+  jest.spyOn(console, 'error')
+})
+
+afterEach(() => {
+  console.error.mockStore()
+})
+
 // Use it like this:
 // const {promise, resolve} = deferred()
 // promise.then(() => console.log('resolved'))
@@ -276,7 +284,25 @@ test('can set the error', async () => {
 
 test('No state updates happen if the component is unmounted while pending', async () => {
   // 💰 const {result, unmount} = renderHook(...)
+  const {promise, resolve} = deferred()
+  const {result, unmount} = renderHook(() => useAsync())
+
+  let p
+  act(() => {
+    p = result.current.run(promise)
+  })
+  unmount()
+  await act(async () => {
+    resolve()
+    await p
+  })
   // 🐨 ensure that console.error is not called (React will call console.error if updates happen when unmounted)
+  expect(console.error).not.toHaveBeenCalled()
 })
 
-test('calling "run" without a promise results in an early error', async () => {})
+test('calling "run" without a promise results in an early error', async () => {
+  const {result} = renderHook(() => useAsync())
+  expect(() => result.current.run()).toThrowErrorMatchingInlineSnapshot(
+    `"The argument passed to useAsync().run must be a promise. Maybe a function that's passed isn't returning anything?"`,
+  )
+})
