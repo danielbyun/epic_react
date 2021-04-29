@@ -19,8 +19,43 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  console.error.mockStore()
+  console.error.mockRestore()
 })
+
+const defaultState = {
+  isIdle: true,
+  isLoading: false,
+  isError: false,
+  isSuccess: false,
+  setData: expect.any(Function),
+  setError: expect.any(Function),
+  error: null,
+  status: 'idle',
+  data: null,
+  run: expect.any(Function),
+  reset: expect.any(Function),
+}
+
+const pendingState = {
+  ...defaultState,
+  isIdle: false,
+  isLoading: true,
+  status: 'pending',
+}
+
+const resolvedState = {
+  ...defaultState,
+  status: 'resolved',
+  isIdle: false,
+  isSuccess: true,
+}
+
+const rejectedState = {
+  ...defaultState,
+  status: 'rejected',
+  isIdle: false,
+  isError: true,
+}
 
 // Use it like this:
 // const {promise, resolve} = deferred()
@@ -37,19 +72,7 @@ test('calling run with a promise which resolves', async () => {
   // 🐨 use renderHook with useAsync to get the result
   // 🐨 assert the result.current is the correct default state
   const {result} = renderHook(() => useAsync()) // need renderHook bc its a custom hook with useRef
-  expect(result.current).toEqual({
-    isIdle: true,
-    isLoading: false,
-    isError: false,
-    isSuccess: false,
-    setData: expect.any(Function),
-    setError: expect.any(Function),
-    error: null,
-    status: 'idle',
-    data: null,
-    run: expect.any(Function),
-    reset: expect.any(Function),
-  })
+  expect(result.current).toEqual(defaultState)
 
   let p
 
@@ -60,19 +83,7 @@ test('calling run with a promise which resolves', async () => {
   // 🐨 call `run`, passing the promise
   //    (💰 this updates state so it needs to be done in an `act` callback)
   // 🐨 assert that result.current is the correct pending state
-  expect(result.current).toEqual({
-    isIdle: false,
-    isLoading: true,
-    isError: false,
-    isSuccess: false,
-    setData: expect.any(Function),
-    setError: expect.any(Function),
-    error: null,
-    status: 'pending',
-    data: null,
-    run: expect.any(Function),
-    reset: expect.any(Function),
-  })
+  expect(result.current).toEqual(pendingState)
 
   // 🐨 call resolve and wait for the promise to be resolved
   //    (💰 this updates state too and you'll need it to be an async `act` call so you can await the promise)
@@ -85,17 +96,8 @@ test('calling run with a promise which resolves', async () => {
   })
 
   expect(result.current).toEqual({
-    isIdle: false,
-    isLoading: false,
-    isError: false,
-    isSuccess: true,
-    setData: expect.any(Function),
-    setError: expect.any(Function),
-    error: null,
-    status: 'resolved',
+    ...resolvedState,
     data: resolvedValue,
-    run: expect.any(Function),
-    reset: expect.any(Function),
   })
 
   // 🐨 call `reset` (💰 this will update state, so...)
@@ -104,19 +106,7 @@ test('calling run with a promise which resolves', async () => {
     result.current.reset()
   })
 
-  expect(result.current).toEqual({
-    isIdle: true,
-    isLoading: false,
-    isError: false,
-    isSuccess: false,
-    setData: expect.any(Function),
-    setError: expect.any(Function),
-    error: null,
-    status: 'idle',
-    data: null,
-    run: expect.any(Function),
-    reset: expect.any(Function),
-  })
+  expect(result.current).toEqual(defaultState)
 })
 
 test('calling run with a promise which rejects', async () => {
@@ -129,19 +119,7 @@ test('calling run with a promise which rejects', async () => {
   // 🐨 use renderHook with useAsync to get the result
   // 🐨 assert the result.current is the correct default state
   const {result} = renderHook(() => useAsync()) // need renderHook bc its a custom hook with useRef
-  expect(result.current).toEqual({
-    isIdle: true,
-    isLoading: false,
-    isError: false,
-    isSuccess: false,
-    setData: expect.any(Function),
-    setError: expect.any(Function),
-    error: null,
-    status: 'idle',
-    data: null,
-    run: expect.any(Function),
-    reset: expect.any(Function),
-  })
+  expect(result.current).toEqual(defaultState)
 
   let p
 
@@ -152,19 +130,7 @@ test('calling run with a promise which rejects', async () => {
   // 🐨 call `run`, passing the promise
   //    (💰 this updates state so it needs to be done in an `act` callback)
   // 🐨 assert that result.current is the correct pending state
-  expect(result.current).toEqual({
-    isIdle: false,
-    isLoading: true,
-    isError: false,
-    isSuccess: false,
-    setData: expect.any(Function),
-    setError: expect.any(Function),
-    error: null,
-    status: 'pending',
-    data: null,
-    run: expect.any(Function),
-    reset: expect.any(Function),
-  })
+  expect(result.current).toEqual(pendingState)
 
   // 🐨 call resolve and wait for the promise to be resolved
   //    (💰 this updates state too and you'll need it to be an async `act` call so you can await the promise)
@@ -179,17 +145,8 @@ test('calling run with a promise which rejects', async () => {
   })
 
   expect(result.current).toEqual({
-    isIdle: false,
-    isLoading: false,
-    isError: true,
-    isSuccess: false,
-    setData: expect.any(Function),
-    setError: expect.any(Function),
+    ...rejectedState,
     error: rejectedValue,
-    status: 'rejected',
-    data: null,
-    run: expect.any(Function),
-    reset: expect.any(Function),
   })
 
   // 🐨 call `reset` (💰 this will update state, so...)
@@ -198,19 +155,7 @@ test('calling run with a promise which rejects', async () => {
     result.current.reset()
   })
 
-  expect(result.current).toEqual({
-    isIdle: true,
-    isLoading: false,
-    isError: false,
-    isSuccess: false,
-    setData: expect.any(Function),
-    setError: expect.any(Function),
-    error: null,
-    status: 'idle',
-    data: null,
-    run: expect.any(Function),
-    reset: expect.any(Function),
-  })
+  expect(result.current).toEqual(defaultState)
 })
 
 test('can specify an initial state', async () => {
@@ -220,17 +165,8 @@ test('can specify an initial state', async () => {
   const {result} = renderHook(() => useAsync(customInitialState))
 
   expect(result.current).toEqual({
-    isIdle: false,
-    isLoading: false,
-    isError: false,
-    isSuccess: true,
-    setData: expect.any(Function),
-    setError: expect.any(Function),
-    error: null,
-    status: 'resolved',
+    ...resolvedState,
     data: mockData,
-    run: expect.any(Function),
-    reset: expect.any(Function),
   })
 })
 
@@ -243,17 +179,8 @@ test('can set the data', async () => {
   })
 
   expect(result.current).toEqual({
-    isIdle: false,
-    isLoading: false,
-    isError: false,
-    isSuccess: true,
-    setData: expect.any(Function),
-    setError: expect.any(Function),
-    error: null,
-    status: 'resolved',
+    ...resolvedState,
     data: mockData,
-    run: expect.any(Function),
-    reset: expect.any(Function),
   })
 })
 
@@ -268,17 +195,8 @@ test('can set the error', async () => {
   })
 
   expect(result.current).toEqual({
-    isIdle: false,
-    isLoading: false,
-    isError: true,
-    isSuccess: false,
-    setData: expect.any(Function),
-    setError: expect.any(Function),
+    ...rejectedState,
     error: mockData,
-    status: 'rejected',
-    data: null,
-    run: expect.any(Function),
-    reset: expect.any(Function),
   })
 })
 
