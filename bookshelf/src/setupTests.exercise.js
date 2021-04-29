@@ -1,4 +1,3 @@
-// 🐨 enable jest-dom by
 import '@testing-library/jest-dom'
 import {server} from 'test/server'
 
