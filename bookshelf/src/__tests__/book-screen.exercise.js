@@ -3,13 +3,17 @@ import * as React from 'react'
 import {render, screen, waitForElementToBeRemoved} from '@testing-library/react'
 import {App} from 'app'
 import {AppProviders} from 'context'
-// import {queryCache} from 'react-query'
+import {queryCache} from 'react-query'
 import {buildUser, buildBook} from 'test/generate'
 import * as auth from 'auth-provider'
 // import {AppProviders} from 'context'
 // import {App} from 'app'
 
 // 🐨 after each test, clear the queryCache and auth.logout
+afterEach(async () => {
+  queryCache.clear()
+  await auth.logout()
+})
 
 test('renders all the book information', async () => {
   // reverse-engineer auth provider
