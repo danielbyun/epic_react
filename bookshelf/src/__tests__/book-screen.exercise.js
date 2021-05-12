@@ -9,7 +9,7 @@ import {
 import {App} from 'app'
 import {AppProviders} from 'context'
 // import {queryCache} from 'react-query'
-// import {buildUser, buildBook} from 'test/generate'
+import {buildUser, buildBook} from 'test/generate'
 import * as auth from 'auth-provider'
 // import {AppProviders} from 'context'
 // import {App} from 'app'
@@ -20,22 +20,38 @@ test('renders all the book information', async () => {
   // reverse-engineer auth provider
   window.localStorage.setItem(auth.localStorageKey, 'SOME_FAKE_TOKEN')
 
+  const user = buildUser()
+  const book = buildBook()
+
+  window.history.pushState({}, 'Test page', `/book/${book.id}`)
   // mock window.fetch
   const originalFetch = window.fetch
   window.fetch = async (url, config) => {
     if (url.endsWith('/bootstrap')) {
       return {
         ok: true,
-        json: async () => ({user: {username: 'bob'}, listItems: []}),
+        json: async () => ({
+          user: {...user, token: 'SOME_FAKE_TOKEN'},
+          listItems: [],
+        }),
+      }
+    } else if (url.endsWith(`/books/${book.id}`)) {
+      return {
+        ok: true,
+        json: async () => ({
+          book,
+        }),
       }
     }
+
+    console.log(url, config)
     return originalFetch(url, config)
   }
 
   render(<App />, {wrapper: AppProviders})
   await waitForElementToBeRemoved(() => screen.getAllByLabelText(/loading/i))
 
-  // trick the application to think we're logged in
+  // trick the application to think we're logged in + render book page
   screen.debug()
 })
 // 🐨 "authenticate" the client by setting the auth.localStorageKey in localStorage to some string value (can be anything for now)
