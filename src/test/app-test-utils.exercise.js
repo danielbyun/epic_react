@@ -49,8 +49,8 @@ const logInAsUser = async userProperties => {
 
 const waitForLoadingToFinish = () =>
   waitForElementToBeRemoved(() => [
-    ...screen.getAllByLabelText(/loading/i),
-    ...screen.getAllByText(/loading/i),
+    ...screen.queryAllByLabelText(/loading/i),
+    ...screen.queryAllByText(/loading/i),
   ])
 
 export * from '@testing-library/react'
