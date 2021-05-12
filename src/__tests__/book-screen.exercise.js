@@ -4,31 +4,43 @@ import {render, screen, waitForElementToBeRemoved} from '@testing-library/react'
 import {App} from 'app'
 import {AppProviders} from 'context'
 import {queryCache} from 'react-query'
-import {buildUser, buildBook} from 'test/generate'
 import * as auth from 'auth-provider'
-// import {AppProviders} from 'context'
-// import {App} from 'app'
+import {buildUser, buildBook} from 'test/generate'
+import * as booksDB from 'test/data/books'
+import * as usersDB from 'test/data/users'
+import * as listItemsDB from 'test/data/list-items'
 
 // 🐨 after each test, clear the queryCache and auth.logout
 afterEach(async () => {
   queryCache.clear()
-  await auth.logout()
+
+  await Promise.all([
+    auth.logout(),
+    usersDB.reset(),
+    booksDB.reset(),
+    listItemsDB.reset(),
+  ])
 })
 
 test('renders all the book information', async () => {
-  // reverse-engineer auth provider
-  // 🐨 "authenticate" the client by setting the auth.localStorageKey in localStorage to some string value (can be anything for now)
-  window.localStorage.setItem(auth.localStorageKey, 'SOME_FAKE_TOKEN')
-
   // 🐨 create a user using `buildUser`
   // 🐨 create a book use `buildBook`
   const user = buildUser()
-  const book = buildBook()
+
+  await usersDB.create(user)
+  const authUser = await usersDB.authenticate(user)
+
+  const book = await booksDB.create(buildBook())
+  const route = `/book/${book.id}`
+
+  // reverse-engineer auth provider
+  // 🐨 "authenticate" the client by setting the auth.localStorageKey in localStorage to some string value (can be anything for now)
+  window.localStorage.setItem(auth.localStorageKey, authUser.token)
 
   // 🐨 update the URL to `/book/${book.id}`
   //   💰 window.history.pushState({}, 'page title', route)
   //   📜 https://developer.mozilla.org/en-US/docs/Web/API/History/pushState
-  window.history.pushState({}, 'Test page', `/book/${book.id}`)
+  window.history.pushState({}, 'Test page', route)
 
   // mock window.fetch
   const originalFetch = window.fetch
@@ -57,7 +69,6 @@ test('renders all the book information', async () => {
       }
     }
 
-    console.log(url, config)
     return originalFetch(url, config)
   }
 
@@ -65,7 +76,10 @@ test('renders all the book information', async () => {
   // (that way, all the same providers we have in the app will be available in our tests)
   render(<App />, {wrapper: AppProviders})
 
-  await waitForElementToBeRemoved(() => screen.getAllByLabelText(/loading/i))
+  await waitForElementToBeRemoved(() => [
+    ...screen.queryAllByLabelText(/loading/i),
+    ...screen.queryAllByText(/loading/i),
+  ])
 
   // trick the application to think we're logged in + render book page
   // screen.debug()
