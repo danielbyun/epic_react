@@ -80,7 +80,7 @@ test('can create a list item for the book', async () => {
   ).not.toBeInTheDocument()
   expect(screen.queryByRole('radio', {name: /star/i})).not.toBeInTheDocument()
 
-  screen.debug()
+  // screen.debug()
 })
 
 test('can remove a list item for the book', async () => {
@@ -101,14 +101,46 @@ test('can remove a list item for the book', async () => {
 
   await waitForLoadingToFinish()
 
-  const startDateNode = screen.getByLabelText(/start date/i)
-  expect(startDateNode).toHaveTextContent(formatDate(new Date()))
-
   expect(screen.getByRole('button', {name: /add to list/i})).toBeInTheDocument()
 
   expect(
     screen.queryByRole('button', {name: /remove from list/i}),
   ).not.toBeInTheDocument()
 
-  screen.debug()
+  // screen.debug()
+})
+
+test('can mark a list item as read', async () => {
+  const user = await logInAsUser()
+  const book = await booksDB.create(buildBook())
+  const route = `/book/${book.id}`
+  const listItem = await listItemsDB.create(
+    buildListItem({owner: user, book, finishDate: null}),
+  )
+
+  await render(<App />, {route, user})
+
+  const markAsReadButton = screen.getByRole('button', {
+    name: /mark as read/i,
+  })
+  userEvent.click(markAsReadButton)
+  expect(markAsReadButton).toBeDisabled()
+
+  await waitForLoadingToFinish()
+
+  expect(
+    screen.getByRole('button', {name: /mark as unread/i}),
+  ).toBeInTheDocument()
+  expect(screen.getAllByRole('radio', {name: /star/i})).toHaveLength(5)
+
+  const startAndFinishDateNode = screen.getByLabelText(/start and finish date/i)
+  expect(startAndFinishDateNode).toHaveTextContent(
+    `${formatDate(listItem.startDate)} — ${formatDate(Date.now())}`,
+  )
+
+  expect(
+    screen.queryByRole('button', {name: /mark as read/i}),
+  ).not.toBeInTheDocument()
+
+  // screen.debug()
 })
