@@ -1,6 +1,10 @@
 // 🐨 here are the things you're going to need for this test:
 import * as React from 'react'
-import {render, screen, waitForElementToBeRemoved} from '@testing-library/react'
+import {
+  render as rtlRender,
+  screen,
+  waitForElementToBeRemoved,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import {App} from 'app'
 import {AppProviders} from 'context'
@@ -24,6 +28,28 @@ afterEach(async () => {
   ])
 })
 
+const render = async (ui, {route = '/list', user, ...renderOptions} = {}) => {
+  // 🐨 create a user using `buildUser`
+  // 🐨 create a book use `buildBook`
+  user = typeof user === 'undefined' ? await logInAsUser() : user
+
+  // 🐨 update the URL to `/book/${book.id}`
+  //   💰 window.history.pushState({}, 'page title', route)
+  //   📜 https://developer.mozilla.org/en-US/docs/Web/API/History/pushState
+  window.history.pushState({}, 'Test page', route)
+
+  // 🐨 render the App component and set the wrapper to the AppProviders
+  // (that way, all the same providers we have in the app will be available in our tests)
+  const returnValue = {
+    ...rtlRender(ui, {wrapper: AppProviders, ...renderOptions}),
+    user,
+  }
+
+  await waitForLoadingToFinish()
+
+  return returnValue
+}
+
 const logInAsUser = async userProperties => {
   const user = buildUser(userProperties)
 
@@ -44,23 +70,10 @@ const waitForLoadingToFinish = () =>
   ])
 
 test('renders all the book information', async () => {
-  // 🐨 create a user using `buildUser`
-  // 🐨 create a book use `buildBook`
-  await logInAsUser()
-
   const book = await booksDB.create(buildBook())
   const route = `/book/${book.id}`
 
-  // 🐨 update the URL to `/book/${book.id}`
-  //   💰 window.history.pushState({}, 'page title', route)
-  //   📜 https://developer.mozilla.org/en-US/docs/Web/API/History/pushState
-  window.history.pushState({}, 'Test page', route)
-
-  // 🐨 render the App component and set the wrapper to the AppProviders
-  // (that way, all the same providers we have in the app will be available in our tests)
-  render(<App />, {wrapper: AppProviders})
-
-  await waitForLoadingToFinish()
+  await render(<App />, {route})
 
   // trick the application to think we're logged in + render book page
   // screen.debug()
@@ -91,23 +104,10 @@ test('renders all the book information', async () => {
 })
 
 test('can create a list item for the book', async () => {
-  // 🐨 create a user using `buildUser`
-  // 🐨 create a book use `buildBook`
-  await logInAsUser()
-
   const book = await booksDB.create(buildBook())
   const route = `/book/${book.id}`
 
-  // 🐨 update the URL to `/book/${book.id}`
-  //   💰 window.history.pushState({}, 'page title', route)
-  //   📜 https://developer.mozilla.org/en-US/docs/Web/API/History/pushState
-  window.history.pushState({}, 'Test page', route)
-
-  // 🐨 render the App component and set the wrapper to the AppProviders
-  // (that way, all the same providers we have in the app will be available in our tests)
-  render(<App />, {wrapper: AppProviders})
-
-  await waitForLoadingToFinish()
+  await render(<App />, {route})
 
   const addToListButton = screen.getByRole('button', {name: /add to list/i})
   userEvent.click(addToListButton)
