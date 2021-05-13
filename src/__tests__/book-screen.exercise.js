@@ -180,16 +180,18 @@ describe('console errors', () => {
   test('note update failures are displayed', async () => {
     // using fake timers to skip debounce time
     jest.useFakeTimers()
-    const {listItem} = await renderBookScreen()
+    await renderBookScreen()
 
     const newNotes = faker.lorem.words()
     const notesTextarea = screen.getByRole('textbox', {name: /notes/i})
+
+    const testErrorMessage = '__test_error_message__'
 
     server.use(
       rest.put(`${apiURL}/list-items/:listItemId`, async (req, res, ctx) => {
         return res(
           ctx.status(400),
-          ctx.json({status: 400, message: '__test_error_message__'}),
+          ctx.json({status: 400, message: testErrorMessage}),
         )
       }),
     )
@@ -202,11 +204,6 @@ describe('console errors', () => {
     // wait for the loading spinner to go away
     await waitForLoadingToFinish()
 
-    expect(screen.getByRole('alert').textContent).toMatchInlineSnapshot(
-      `"There was an error: __test_error_message__"`,
-    )
-    expect(await listItemsDB.read(listItem.id)).not.toMatchObject({
-      notes: newNotes,
-    })
+    expect(screen.getByRole('alert').textContent).toMatchInlineSnapshot()
   })
 })
