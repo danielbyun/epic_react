@@ -7,6 +7,8 @@ import * as booksDB from 'test/data/books'
 import * as usersDB from 'test/data/users'
 import * as listItemsDB from 'test/data/list-items'
 
+jest.mock('components/profiler')
+
 beforeEach(() => jest.useRealTimers())
 
 // 🐨 after each test, clear the queryCache and auth.logout
