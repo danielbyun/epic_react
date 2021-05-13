@@ -176,4 +176,37 @@ describe('console errors', () => {
       (await screen.findByRole('alert')).textContent,
     ).toMatchInlineSnapshot(`"There was an error: Book not found"`)
   })
+
+  test('note update failures are displayed', async () => {
+    // using fake timers to skip debounce time
+    jest.useFakeTimers()
+    const {listItem} = await renderBookScreen()
+
+    const newNotes = faker.lorem.words()
+    const notesTextarea = screen.getByRole('textbox', {name: /notes/i})
+
+    server.use(
+      rest.put(`${apiURL}/list-items/:listItemId`, async (req, res, ctx) => {
+        return res(
+          ctx.status(400),
+          ctx.json({status: 400, message: '__test_error_message__'}),
+        )
+      }),
+    )
+
+    userEvent.clear(notesTextarea)
+    userEvent.type(notesTextarea, newNotes)
+
+    // wait for the loading spinner to show up
+    await screen.findByLabelText(/loading/i)
+    // wait for the loading spinner to go away
+    await waitForLoadingToFinish()
+
+    expect(screen.getByRole('alert').textContent).toMatchInlineSnapshot(
+      `"There was an error: __test_error_message__"`,
+    )
+    expect(await listItemsDB.read(listItem.id)).not.toMatchObject({
+      notes: newNotes,
+    })
+  })
 })
