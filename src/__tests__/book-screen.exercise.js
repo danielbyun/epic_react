@@ -16,6 +16,8 @@ import * as listItemsDB from 'test/data/list-items'
 
 import {formatDate} from 'utils/misc'
 
+import faker from 'faker'
+
 test('renders all the book information', async () => {
   const book = await booksDB.create(buildBook())
   const route = `/book/${book.id}`
@@ -143,4 +145,27 @@ test('can mark a list item as read', async () => {
   ).not.toBeInTheDocument()
 
   // screen.debug()
+})
+
+test('can edit a note', async () => {
+  const user = await logInAsUser()
+  const book = await booksDB.create(buildBook())
+  const listItem = await listItemsDB.create(buildListItem({owner: user, book}))
+  const route = `/book/${book.id}`
+
+  await render(<App />, {route, user})
+
+  const newNotes = faker.lorem.words()
+  const notesTextarea = screen.getByRole('textbox', {name: /notes/i})
+
+  userEvent.clear(notesTextarea)
+  userEvent.type(notesTextarea, newNotes)
+
+  await screen.findByLabelText(/loading/i)
+
+  expect(notesTextarea).toHaveValue(newNotes)
+
+  expect(await listItemsDB.read(listItem.id)).toMatchObject({
+    notes: newNotes,
+  })
 })
