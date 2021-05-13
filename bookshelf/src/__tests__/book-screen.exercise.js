@@ -164,11 +164,16 @@ test('can edit a note', async () => {
   })
 })
 
-test('shows an error message when the book fails to load', async () => {
-  const book = {id: 'BAD_ID'}
-  await renderBookScreen({listItem: null, book})
+describe('console errors', () => {
+  beforeAll(() => jest.spyOn(console, 'error').mockImplementation(() => {}))
+  afterAll(() => console.error.mockRestore())
 
-  expect((await screen.findByRole('alert')).textContent).toMatchInlineSnapshot(
-    `"There was an error: Book not found"`,
-  )
+  test('shows an error message when the book fails to load', async () => {
+    const book = {id: 'BAD_ID'}
+    await renderBookScreen({listItem: null, book})
+
+    expect(
+      (await screen.findByRole('alert')).textContent,
+    ).toMatchInlineSnapshot(`"There was an error: Book not found"`)
+  })
 })
