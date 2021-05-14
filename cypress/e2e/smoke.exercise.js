@@ -44,6 +44,15 @@ describe('smoke', () => {
       })
     })
 
+    cy.findByRole('navigation').within(() => {
+      cy.findByRole('link', {name: /reading list/i}).click()
+    })
+
+    cy.findByRole('main').within(() => {
+      cy.findAllByRole('listitem').should('have.length', 1)
+      cy.findByRole('link', {name: /voice of war/i}).click()
+    })
+
     //
     // 🐨 type in the notes textbox
     // The textbox is debounced, so the loading spinner won't show up immediately
