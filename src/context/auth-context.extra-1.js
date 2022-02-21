@@ -62,12 +62,10 @@ function AuthProvider(props) {
     setData(null)
   }, [setData])
 
-  const value = React.useMemo(() => ({user, login, logout, register}), [
-    login,
-    logout,
-    register,
-    user,
-  ])
+  const value = React.useMemo(
+    () => ({user, login, logout, register}),
+    [login, logout, register, user],
+  )
 
   if (isLoading || isIdle) {
     return <FullPageSpinner />
